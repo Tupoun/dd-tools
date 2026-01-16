@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }} - Domů{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Vítejte v {{ app_name }}</h2>
+    <p>Vyberte nástroj z menu nebo klikněte na kartu níže</p>
+</div>
+
+<div class="tools-grid">
+    {% for tool in tools %}
+    <a href="{{ url_for(tool.route) }}" class="tool-card">
+        <h3>{{ tool.name }}</h3>
+        <p>{{ tool.description }}</p>
+    </a>
+    {% endfor %}
+</div>
+
+{% if tools|length == 0 %}
+<div class="card">
+    <p style="text-align: center; color: var(--text-light);">
+        Zatím nejsou k dispozici žádné nástroje.
+    </p>
+</div>
+{% endif %}
+{% endblock %}
