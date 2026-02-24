@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 import os
 import io
 
-from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser
+from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser, formatter, utilities
 
 app = Flask(__name__)
 app.secret_key = 'dd-tools-secret-key-change-in-production'  # Změň v produkci!
@@ -53,6 +53,18 @@ TOOLS = [
         'name': 'Cron',
         'description': 'Parser a generátor cron výrazů',
         'route': 'cron_page'
+    },
+    {
+        'id': 'formatter',
+        'name': 'Formatter',
+        'description': 'Formátování JSON a XML',
+        'route': 'formatter_page'
+    },
+    {
+        'id': 'utilities',
+        'name': 'Utilities',
+        'description': 'Unix timestamp, JSON unescape, Unicode unescape',
+        'route': 'utilities_page'
     }
     # Zde přidávej další nástroje
 ]
@@ -253,6 +265,81 @@ def cron_page():
                            parse_form=parse_form,
                            build_form=build_form,
                            presets=cron_parser.PRESETS)
+
+
+@app.route('/formatter', methods=['GET', 'POST'])
+def formatter_page():
+    """Stránka pro formátování JSON a XML"""
+    json_result = None
+    xml_result = None
+    json_form = {}
+    xml_form = {}
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action in ('pretty', 'minify', 'sort'):
+            text = request.form.get('json_input', '')
+            json_form = {'input': text}
+            if action == 'pretty':
+                output, error = formatter.format_json(text)
+            elif action == 'minify':
+                output, error = formatter.minify_json(text)
+            elif action == 'sort':
+                output, error = formatter.format_json(text, sort_keys=True)
+            json_result = {'output': output, 'error': error}
+
+        elif action == 'xml_format':
+            text = request.form.get('xml_input', '')
+            xml_form = {'input': text}
+            output, error = formatter.format_xml(text)
+            xml_result = {'output': output, 'error': error}
+
+    return render_template('formatter.html', tools=TOOLS,
+                           json_result=json_result, xml_result=xml_result,
+                           json_form=json_form, xml_form=xml_form)
+
+
+@app.route('/utilities', methods=['GET', 'POST'])
+def utilities_page():
+    """Stránka pro utility"""
+    ts_result = None
+    json_unescape_result = None
+    unicode_unescape_result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'ts_to_dt':
+            ts = request.form.get('timestamp', '')
+            form_data = {'action': action, 'timestamp': ts}
+            output, error = utilities.timestamp_to_datetime(ts)
+            ts_result = {'output': output, 'error': error, 'direction': 'to_dt'}
+
+        elif action == 'dt_to_ts':
+            dt_str = request.form.get('datetime', '')
+            form_data = {'action': action, 'datetime': dt_str}
+            output, error = utilities.datetime_to_timestamp(dt_str)
+            ts_result = {'output': output, 'error': error, 'direction': 'to_ts'}
+
+        elif action == 'json_unescape':
+            text = request.form.get('json_escaped', '')
+            form_data = {'action': action, 'json_escaped': text}
+            output, error = utilities.unescape_json_string(text)
+            json_unescape_result = {'output': output, 'error': error}
+
+        elif action == 'unicode_unescape':
+            text = request.form.get('unicode_escaped', '')
+            form_data = {'action': action, 'unicode_escaped': text}
+            output, error = utilities.unescape_unicode(text)
+            unicode_unescape_result = {'output': output, 'error': error}
+
+    return render_template('utilities.html', tools=TOOLS,
+                           ts_result=ts_result,
+                           json_unescape_result=json_unescape_result,
+                           unicode_unescape_result=unicode_unescape_result,
+                           form_data=form_data)
 
 
 @app.context_processor

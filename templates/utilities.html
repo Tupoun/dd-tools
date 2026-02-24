@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Utilities - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Utilities</h2>
+    <p>Unix timestamp, JSON unescape, Unicode unescape</p>
+</div>
+
+{# ── Unix timestamp ── #}
+<div class="card">
+    <h3>Unix timestamp</h3>
+
+    <form method="POST" style="margin-bottom: 20px;">
+        <input type="hidden" name="action" value="ts_to_dt">
+        <div style="display: flex; gap: 15px; align-items: flex-end;">
+            <div style="flex: 1;">
+                <label class="form-label">Timestamp → datum a čas</label>
+                <input type="text" name="timestamp" class="form-control" spellcheck="false"
+                    placeholder="1700000000"
+                    value="{{ form_data.timestamp if form_data.action == 'ts_to_dt' else '' }}">
+            </div>
+            <div><button class="btn btn-primary">Převést →</button></div>
+        </div>
+    </form>
+
+    {% if ts_result and ts_result.direction == 'to_dt' %}
+        {% if ts_result.error %}
+        <div class="alert alert-error">{{ ts_result.error }}</div>
+        {% else %}
+        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+            <div style="flex: 1;">
+                <label class="form-label">UTC</label>
+                <input type="text" class="form-control" readonly
+                    value="{{ ts_result.output.utc.strftime('%Y-%m-%d %H:%M:%S') }} UTC">
+            </div>
+            <div style="flex: 1;">
+                <label class="form-label">Lokální čas</label>
+                <input type="text" class="form-control" readonly
+                    value="{{ ts_result.output.local.strftime('%Y-%m-%d %H:%M:%S') }}">
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    <form method="POST">
+        <input type="hidden" name="action" value="dt_to_ts">
+        <div style="display: flex; gap: 15px; align-items: flex-end;">
+            <div style="flex: 1;">
+                <label class="form-label">Datum a čas → timestamp</label>
+                <input type="text" name="datetime" class="form-control" spellcheck="false"
+                    placeholder="2024-01-15 09:30:00"
+                    value="{{ form_data.datetime if form_data.action == 'dt_to_ts' else '' }}">
+            </div>
+            <div><button class="btn btn-primary">← Převést</button></div>
+        </div>
+    </form>
+
+    {% if ts_result and ts_result.direction == 'to_ts' %}
+        {% if ts_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ ts_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 15px;">
+            <label class="form-label">Timestamp</label>
+            <input type="text" class="form-control" readonly value="{{ ts_result.output }}">
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ── JSON string unescape ── #}
+<div class="card">
+    <h3>JSON string unescape</h3>
+    <p style="margin-bottom: 15px; color: var(--text-light); font-size: 14px;">
+        Převede escaped JSON string na čitelný text: <code>\n</code> → zalomení, <code>\"</code> → uvozovka, atd.
+    </p>
+    <form method="POST">
+        <input type="hidden" name="action" value="json_unescape">
+        <div class="form-group">
+            <label class="form-label">Vstup (escaped string)</label>
+            <textarea name="json_escaped" class="form-control" rows="4" spellcheck="false"
+                placeholder='Řádek 1\nŘádek 2\t\"hodnota\"'>{{ form_data.json_escaped if form_data.action == 'json_unescape' else '' }}</textarea>
+        </div>
+        <button class="btn btn-primary">Unescape</button>
+    </form>
+
+    {% if json_unescape_result %}
+        {% if json_unescape_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ json_unescape_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledek</label>
+            <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px; white-space: pre-wrap;">{{ json_unescape_result.output }}</pre>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ── Unicode unescape ── #}
+<div class="card">
+    <h3>Unicode unescape</h3>
+    <p style="margin-bottom: 15px; color: var(--text-light); font-size: 14px;">
+        Převede <code>\uXXXX</code> sekvence na skutečné znaky: <code>\u003c</code> → <code>&lt;</code>
+    </p>
+    <form method="POST">
+        <input type="hidden" name="action" value="unicode_unescape">
+        <div class="form-group">
+            <label class="form-label">Vstup</label>
+            <textarea name="unicode_escaped" class="form-control" rows="4" spellcheck="false"
+                placeholder="\u003chtml\u003e\u0048ello">{{ form_data.unicode_escaped if form_data.action == 'unicode_unescape' else '' }}</textarea>
+        </div>
+        <button class="btn btn-primary">Unescape</button>
+    </form>
+
+    {% if unicode_unescape_result %}
+        {% if unicode_unescape_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ unicode_unescape_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledek</label>
+            <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px; white-space: pre-wrap;">{{ unicode_unescape_result.output }}</pre>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

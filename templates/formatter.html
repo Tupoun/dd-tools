@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Formatter - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Formatter</h2>
+    <p>Formátování a minifikace JSON a XML</p>
+</div>
+
+{# ── JSON ── #}
+<div class="card">
+    <h3>JSON</h3>
+    <form method="POST">
+        <div class="form-group">
+            <label class="form-label">Vstup</label>
+            <textarea name="json_input" class="form-control" rows="8" spellcheck="false"
+                placeholder='{"key":"value",...}'>{{ json_form.get('input', '') }}</textarea>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button name="action" value="pretty"  class="btn btn-primary">Pretty print</button>
+            <button name="action" value="minify"  class="btn btn-primary">Minify</button>
+            <button name="action" value="sort"    class="btn btn-primary">Pretty + sort keys</button>
+        </div>
+    </form>
+
+    {% if json_result %}
+        {% if json_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ json_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledek</label>
+            <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px; white-space: pre-wrap; word-break: break-all;">{{ json_result.output }}</pre>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ── XML ── #}
+<div class="card">
+    <h3>XML</h3>
+    <form method="POST">
+        <div class="form-group">
+            <label class="form-label">Vstup</label>
+            <textarea name="xml_input" class="form-control" rows="8" spellcheck="false"
+                placeholder="<root><item>...</item></root>">{{ xml_form.get('input', '') }}</textarea>
+        </div>
+        <button name="action" value="xml_format" class="btn btn-primary">Formátovat</button>
+    </form>
+
+    {% if xml_result %}
+        {% if xml_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ xml_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledek</label>
+            <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px; white-space: pre-wrap;">{{ xml_result.output }}</pre>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
