@@ -39,14 +39,14 @@ def escapes_to_number(text, divisor=1, byteorder='big'):
     return result, None
 
 
-def number_to_escapes(value, divisor=1, byte_count=2, byteorder='big'):
+def number_to_escapes(value, divisor=1, byteorder='big'):
     """
     Převede číslo na řetězec s \\uXXXX escape sekvencemi.
+    Počet bajtů se detekuje automaticky z velikosti výsledné hodnoty.
 
     Args:
         value: Číslo (float nebo int)
         divisor: Násobitel (hodnota se vynásobí před převodem)
-        byte_count: Počet bajtů výstupu (1, 2, 4, 8)
         byteorder: 'big' nebo 'little'
 
     Returns:
@@ -57,10 +57,14 @@ def number_to_escapes(value, divisor=1, byte_count=2, byteorder='big'):
     except (ValueError, TypeError):
         return None, "Neplatná číselná hodnota"
 
+    # Automatická detekce počtu bajtů
+    byte_count = max(1, (int_val.bit_length() + 7) // 8)
+
     bytes_list = []
+    tmp = int_val
     for _ in range(byte_count):
-        bytes_list.append(int_val & 0xFF)
-        int_val >>= 8
+        bytes_list.append(tmp & 0xFF)
+        tmp >>= 8
 
     if byteorder == 'big':
         bytes_list = bytes_list[::-1]
