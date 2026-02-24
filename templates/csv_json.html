@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}CSV ↔ JSON - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>CSV ↔ JSON</h2>
+    <p>Konverze mezi CSV a JSON formáty</p>
+</div>
+
+<div class="card">
+    <div style="margin-bottom: 15px;">
+        <label class="form-label">Oddělovač</label>
+        <select id="delimiter-select" style="width: 150px;" class="form-control">
+            <option value=",">, (čárka)</option>
+            <option value=";">; (středník)</option>
+            <option value="&#9;">Tab</option>
+        </select>
+    </div>
+
+    {# CSV → JSON #}
+    <form method="POST" id="csv-form">
+        <input type="hidden" name="action" value="csv_to_json">
+        <input type="hidden" name="delimiter" id="delim1" value=",">
+        <div class="form-group">
+            <label class="form-label">CSV → JSON</label>
+            <textarea name="csv_input" class="form-control" rows="6" spellcheck="false"
+                placeholder="jméno,věk,město&#10;Jan,30,Praha&#10;Eva,25,Brno">{{ form_data.csv_input if form_data.action == 'csv_to_json' else '' }}</textarea>
+        </div>
+        <button class="btn btn-primary">Převést na JSON →</button>
+    </form>
+
+    {% if result and result.action == 'csv_to_json' %}
+        {% if result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledek (JSON)</label>
+            <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 13px; overflow-x: auto; white-space: pre-wrap;">{{ result.output }}</pre>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<div class="card">
+    {# JSON → CSV #}
+    <form method="POST" id="json-form">
+        <input type="hidden" name="action" value="json_to_csv">
+        <input type="hidden" name="delimiter" id="delim2" value=",">
+        <div class="form-group">
+            <label class="form-label">JSON → CSV</label>
+            <textarea name="json_input" class="form-control" rows="6" spellcheck="false"
+                placeholder='[{"jméno":"Jan","věk":30},{"jméno":"Eva","věk":25}]'>{{ form_data.json_input if form_data.action == 'json_to_csv' else '' }}</textarea>
+        </div>
+        <button class="btn btn-primary">← Převést na CSV</button>
+    </form>
+
+    {% if result and result.action == 'json_to_csv' %}
+        {% if result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledek (CSV)</label>
+            <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 13px; overflow-x: auto; white-space: pre-wrap;">{{ result.output }}</pre>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<script>
+// Pouze synchronizace oddělovače mezi formuláři — žádná konverzní logika
+document.getElementById('delimiter-select').addEventListener('change', function() {
+    document.getElementById('delim1').value = this.value;
+    document.getElementById('delim2').value = this.value;
+});
+</script>
+{% endblock %}

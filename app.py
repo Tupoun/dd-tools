@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 import os
 import io
 
-from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser, formatter, utilities
+from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser, formatter, utilities, diff_tool, csv_json, uuid_generator
 
 app = Flask(__name__)
 app.secret_key = 'dd-tools-secret-key-change-in-production'  # Změň v produkci!
@@ -65,6 +65,24 @@ TOOLS = [
         'name': 'Utilities',
         'description': 'Unix timestamp, JSON unescape, Unicode unescape',
         'route': 'utilities_page'
+    },
+    {
+        'id': 'diff',
+        'name': 'Diff',
+        'description': 'Porovnání dvou textů',
+        'route': 'diff_page'
+    },
+    {
+        'id': 'csv_json',
+        'name': 'CSV ↔ JSON',
+        'description': 'Konverze mezi CSV a JSON',
+        'route': 'csv_json_page'
+    },
+    {
+        'id': 'uuid',
+        'name': 'UUID',
+        'description': 'Generátor UUID v1 a v4',
+        'route': 'uuid_page'
     }
     # Zde přidávej další nástroje
 ]
@@ -340,6 +358,66 @@ def utilities_page():
                            json_unescape_result=json_unescape_result,
                            unicode_unescape_result=unicode_unescape_result,
                            form_data=form_data)
+
+
+@app.route('/diff', methods=['GET', 'POST'])
+def diff_page():
+    """Stránka pro porovnání textů"""
+    result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        text1 = request.form.get('text1', '')
+        text2 = request.form.get('text2', '')
+        form_data = {'text1': text1, 'text2': text2}
+        lines, identical = diff_tool.compare(text1, text2)
+        result = {'lines': lines, 'identical': identical}
+
+    return render_template('diff.html', tools=TOOLS, result=result, form_data=form_data)
+
+
+@app.route('/csv-json', methods=['GET', 'POST'])
+def csv_json_page():
+    """Stránka pro konverzi CSV ↔ JSON"""
+    result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        delimiter = request.form.get('delimiter', ',')
+        if len(delimiter) != 1:
+            delimiter = ','
+
+        if action == 'csv_to_json':
+            text = request.form.get('csv_input', '')
+            form_data = {'action': action, 'csv_input': text}
+            output, error = csv_json.csv_to_json(text, delimiter)
+            result = {'action': action, 'output': output, 'error': error}
+
+        elif action == 'json_to_csv':
+            text = request.form.get('json_input', '')
+            form_data = {'action': action, 'json_input': text}
+            output, error = csv_json.json_to_csv(text, delimiter)
+            result = {'action': action, 'output': output, 'error': error}
+
+    return render_template('csv_json.html', tools=TOOLS, result=result, form_data=form_data)
+
+
+@app.route('/uuid', methods=['GET', 'POST'])
+def uuid_page():
+    """Stránka pro generování UUID"""
+    result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        version = request.form.get('version', '4')
+        count = request.form.get('count', '1')
+        form_data = {'version': version, 'count': count}
+        uuids, error = uuid_generator.generate(version, count)
+        result = {'uuids': uuids, 'error': error}
+
+    return render_template('uuid.html', tools=TOOLS, result=result,
+                           form_data=form_data, versions=uuid_generator.VERSIONS)
 
 
 @app.context_processor
