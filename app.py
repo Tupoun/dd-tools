@@ -32,7 +32,7 @@ TOOLS = [
     },
     {
         'id': 'encoder',
-        'name': 'Enkodér',
+        'name': 'Encoder',
         'description': 'Base64, URL encode, Hex a další převody',
         'route': 'text_encoder_page'
     },
