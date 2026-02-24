@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Hash generátor - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Hash generátor</h2>
+    <p>Výpočet MD5, SHA-1, SHA-256 a SHA-512 otisků</p>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="form-group">
+            <label class="form-label">Vstupní text</label>
+            <textarea name="text" class="form-control" rows="4" spellcheck="false"
+                placeholder="Vložte text pro výpočet hashe...">{{ form_data.get('text', '') }}</textarea>
+        </div>
+        <button class="btn btn-primary">Vypočítat</button>
+    </form>
+</div>
+
+{% if result %}
+    {% for algo, hash_value in result.items() %}
+    <div class="card" style="margin-bottom: 15px;">
+        <h3 style="font-size: 16px; margin-bottom: 10px;">{{ algo }}</h3>
+        <code style="display: block; background: var(--bg-light); padding: 10px 15px; border-radius: 4px; font-size: 13px; word-break: break-all;">{{ hash_value }}</code>
+    </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}

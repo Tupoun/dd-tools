@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 import os
 import io
 
-from libs import encoding_converter
+from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser
 
 app = Flask(__name__)
 app.secret_key = 'dd-tools-secret-key-change-in-production'  # Změň v produkci!
@@ -23,6 +23,36 @@ TOOLS = [
         'name': 'Převod kódování',
         'description': 'Převod textových souborů mezi různými kódováními',
         'route': 'encoding_converter_page'
+    },
+    {
+        'id': 'bytes',
+        'name': 'Převod bajtů',
+        'description': 'Převod Unicode escape sekvencí na čísla a zpět',
+        'route': 'bytes_converter_page'
+    },
+    {
+        'id': 'encoder',
+        'name': 'Enkodér',
+        'description': 'Base64, URL encode, Hex a další převody',
+        'route': 'text_encoder_page'
+    },
+    {
+        'id': 'jwt',
+        'name': 'JWT Decoder',
+        'description': 'Dekódování JWT tokenů',
+        'route': 'jwt_decoder_page'
+    },
+    {
+        'id': 'hash',
+        'name': 'Hash generátor',
+        'description': 'MD5, SHA-1, SHA-256, SHA-512',
+        'route': 'hash_generator_page'
+    },
+    {
+        'id': 'cron',
+        'name': 'Cron',
+        'description': 'Parser a generátor cron výrazů',
+        'route': 'cron_page'
     }
     # Zde přidávej další nástroje
 ]
@@ -39,66 +69,190 @@ def encoding_converter_page():
     """Stránka pro převod kódování"""
     encodings = encoding_converter.get_encodings()
     error_modes = encoding_converter.get_error_modes()
-    return render_template('encoding.html', 
-                         encodings=encodings, 
-                         error_modes=error_modes,
-                         tools=TOOLS)
+    return render_template('encoding.html',
+                           encodings=encodings,
+                           error_modes=error_modes,
+                           tools=TOOLS)
 
 
 @app.route('/encoding/convert', methods=['POST'])
 def encoding_convert():
     """Zpracování převodu kódování"""
-    
-    # Kontrola nahraného souboru
+
     if 'file' not in request.files:
         flash('Nebyl vybrán žádný soubor', 'error')
         return redirect(url_for('encoding_converter_page'))
-    
+
     file = request.files['file']
     if file.filename == '':
         flash('Nebyl vybrán žádný soubor', 'error')
         return redirect(url_for('encoding_converter_page'))
-    
-    # Získání parametrů
+
     source_encoding = request.form.get('source_encoding')
     target_encoding = request.form.get('target_encoding')
     error_mode = request.form.get('error_mode', 'replace')
-    
-    # Validace
+
     if not source_encoding or not target_encoding:
         flash('Musíte vybrat zdrojové i cílové kódování', 'error')
         return redirect(url_for('encoding_converter_page'))
-    
+
     try:
-        # Načti obsah souboru
         content = file.read()
-        
-        # Převeď kódování
         converted, error = encoding_converter.convert_content(
             content, source_encoding, target_encoding, error_mode
         )
-        
+
         if error:
             flash(error, 'error')
             return redirect(url_for('encoding_converter_page'))
-        
-        # Vytvoř název výstupního souboru
+
         original_filename = secure_filename(file.filename)
         output_filename = encoding_converter.generate_output_filename(
             original_filename, target_encoding
         )
-        
-        # Vrať soubor ke stažení
+
         return send_file(
             io.BytesIO(converted),
             mimetype='text/plain',
             as_attachment=True,
             download_name=output_filename
         )
-        
+
     except Exception as e:
         flash(f'Chyba při zpracování: {str(e)}', 'error')
         return redirect(url_for('encoding_converter_page'))
+
+
+@app.route('/bytes', methods=['GET', 'POST'])
+def bytes_converter_page():
+    """Stránka pro převod bajtů"""
+    result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        direction = request.form.get('direction')
+        divisor = float(request.form.get('divisor', 1) or 1)
+        form_data = {'direction': direction, 'divisor': divisor}
+
+        if direction == 'to_number':
+            escapes = request.form.get('escapes', '')
+            form_data['escapes'] = escapes
+            output, error = bytes_converter.escapes_to_number(escapes, divisor)
+            result = {'direction': direction, 'output': output, 'error': error}
+        elif direction == 'to_escapes':
+            number = request.form.get('number', '')
+            form_data['number'] = number
+            output, error = bytes_converter.number_to_escapes(number, divisor)
+            result = {'direction': direction, 'output': output, 'error': error}
+
+    return render_template('bytes_converter.html', tools=TOOLS, result=result, form_data=form_data)
+
+
+@app.route('/encoder', methods=['GET', 'POST'])
+def text_encoder_page():
+    """Stránka pro enkódování textu"""
+    result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        algorithm = request.form.get('algorithm', 'base64')
+        action = request.form.get('action', 'encode')
+        text = request.form.get('input', '')
+        form_data = {'algorithm': algorithm, 'action': action, 'input': text}
+
+        if action == 'encode':
+            output, error = text_encoder.encode(text, algorithm)
+        else:
+            output, error = text_encoder.decode(text, algorithm)
+
+        result = {'output': output, 'error': error}
+
+    return render_template('text_encoder.html', tools=TOOLS,
+                           result=result, form_data=form_data,
+                           algorithms=text_encoder.ALGORITHMS)
+
+
+@app.route('/jwt', methods=['GET', 'POST'])
+def jwt_decoder_page():
+    """Stránka pro dekódování JWT tokenů"""
+    result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        token = request.form.get('token', '')
+        form_data = {'token': token}
+        decoded, error = jwt_decoder.decode(token)
+        if error:
+            result = {'error': error}
+        else:
+            result = decoded
+
+    return render_template('jwt_decoder.html', tools=TOOLS, result=result, form_data=form_data)
+
+
+@app.route('/hash', methods=['GET', 'POST'])
+def hash_generator_page():
+    """Stránka pro generování hashů"""
+    result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        text = request.form.get('text', '')
+        form_data = {'text': text}
+        result = hash_generator.compute_all(text)
+
+    return render_template('hash_generator.html', tools=TOOLS, result=result, form_data=form_data)
+
+
+@app.route('/cron', methods=['GET', 'POST'])
+def cron_page():
+    """Stránka pro cron parser a generátor"""
+    parse_result = None
+    build_result = None
+    parse_form = {}
+    build_form = {}
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'parse':
+            expression = request.form.get('expression', '').strip()
+            parse_form = {'expression': expression}
+
+            description, error = cron_parser.describe(expression)
+            if error:
+                parse_result = {'error': error}
+            else:
+                runs, err2 = cron_parser.next_runs(expression)
+                parse_result = {
+                    'description': description,
+                    'next_runs': runs or [],
+                    'error': err2,
+                }
+
+        elif action == 'build':
+            fields = {
+                'minute':  request.form.get('minute', '*'),
+                'hour':    request.form.get('hour', '*'),
+                'day':     request.form.get('day', '*'),
+                'month':   request.form.get('month', '*'),
+                'weekday': request.form.get('weekday', '*'),
+            }
+            build_form = fields
+            expression = cron_parser.build(**fields)
+            description, error = cron_parser.describe(expression)
+            build_result = {
+                'expression': expression,
+                'description': description,
+                'error': error,
+            }
+
+    return render_template('cron.html', tools=TOOLS,
+                           parse_result=parse_result,
+                           build_result=build_result,
+                           parse_form=parse_form,
+                           build_form=build_form,
+                           presets=cron_parser.PRESETS)
 
 
 @app.context_processor

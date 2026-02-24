@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Převod bajtů - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Převod bajtů</h2>
+    <p>Převod Unicode escape sekvencí (\u0000\u00c6) na čísla a zpět</p>
+</div>
+
+<div class="card">
+    <h3>Escape sekvence → číslo</h3>
+    <form method="POST">
+        <input type="hidden" name="direction" value="to_number">
+        <div style="display: flex; gap: 15px; align-items: flex-end;">
+            <div style="flex: 2;">
+                <label class="form-label">Escape sekvence</label>
+                <input type="text" name="escapes" class="form-control" spellcheck="false"
+                    placeholder="\u0000\u00c6"
+                    value="{{ form_data.escapes if form_data.direction == 'to_number' else '' }}">
+            </div>
+            <div style="width: 120px;">
+                <label class="form-label">Dělitel</label>
+                <input type="number" name="divisor" class="form-control" value="{{ form_data.divisor if form_data.direction == 'to_number' else 1 }}" min="1">
+            </div>
+            <div>
+                <button class="btn btn-primary">Převést →</button>
+            </div>
+        </div>
+    </form>
+    {% if result and result.direction == 'to_number' %}
+        {% if result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ result.error }}</div>
+        {% else %}
+        <div style="margin-top: 15px;">
+            <label class="form-label">Výsledek</label>
+            <input type="text" class="form-control" readonly value="{{ result.output }}">
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Číslo → escape sekvence</h3>
+    <form method="POST">
+        <input type="hidden" name="direction" value="to_escapes">
+        <div style="display: flex; gap: 15px; align-items: flex-end;">
+            <div style="flex: 2;">
+                <label class="form-label">Číslo</label>
+                <input type="text" name="number" class="form-control" spellcheck="false"
+                    placeholder="1.98"
+                    value="{{ form_data.number if form_data.direction == 'to_escapes' else '' }}">
+            </div>
+            <div style="width: 120px;">
+                <label class="form-label">Dělitel</label>
+                <input type="number" name="divisor" class="form-control" value="{{ form_data.divisor if form_data.direction == 'to_escapes' else 1 }}" min="1">
+            </div>
+            <div>
+                <button class="btn btn-primary">← Převést</button>
+            </div>
+        </div>
+    </form>
+    {% if result and result.direction == 'to_escapes' %}
+        {% if result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ result.error }}</div>
+        {% else %}
+        <div style="margin-top: 15px;">
+            <label class="form-label">Výsledek</label>
+            <input type="text" class="form-control" readonly value="{{ result.output }}">
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

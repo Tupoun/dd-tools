@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Cron - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Cron</h2>
+    <p>Parser a generátor cron výrazů</p>
+</div>
+
+{# ── Parser ── #}
+<div class="card">
+    <h3>Parser — výraz → popis</h3>
+    <form method="POST">
+        <input type="hidden" name="action" value="parse">
+        <div style="display: flex; gap: 15px; align-items: flex-end;">
+            <div style="flex: 1;">
+                <label class="form-label">Cron výraz</label>
+                <input type="text" name="expression" class="form-control" spellcheck="false"
+                    placeholder="0 9 * * 1-5"
+                    value="{{ parse_form.get('expression', '') }}">
+            </div>
+            <div>
+                <button class="btn btn-primary">Parsovat</button>
+            </div>
+        </div>
+    </form>
+
+    {% if parse_result %}
+        {% if parse_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ parse_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <div style="margin-bottom: 15px;">
+                <label class="form-label">Popis</label>
+                <div style="background: var(--bg-light); padding: 12px 15px; border-radius: 4px; font-size: 15px;">
+                    {{ parse_result.description }}
+                </div>
+            </div>
+            <label class="form-label">Příštích 5 spuštění</label>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                {% for dt in parse_result.next_runs %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 8px 12px; color: var(--text-light);">#{{ loop.index }}</td>
+                    <td style="padding: 8px 12px; font-family: monospace;">{{ dt.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td style="padding: 8px 12px; color: var(--text-light);">{{ dt.strftime('%A') }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ── Preset tlačítka ── #}
+<div class="card">
+    <h3>Předdefinované výrazy</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        {% for expr, label in presets %}
+        <form method="POST">
+            <input type="hidden" name="action" value="parse">
+            <input type="hidden" name="expression" value="{{ expr }}">
+            <button class="btn btn-primary" style="font-size: 13px; padding: 8px 14px;">
+                {{ label }}<br>
+                <code style="font-size: 11px; opacity: 0.8;">{{ expr }}</code>
+            </button>
+        </form>
+        {% endfor %}
+    </div>
+</div>
+
+{# ── Generátor ── #}
+<div class="card">
+    <h3>Generátor — pole → výraz</h3>
+    <form method="POST">
+        <input type="hidden" name="action" value="build">
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 20px;">
+            {% set fields = [
+                ('minute',  'Minuta',      '0–59, *, */5'),
+                ('hour',    'Hodina',      '0–23, *, */2'),
+                ('day',     'Den',         '1–31, *'),
+                ('month',   'Měsíc',       '1–12, *'),
+                ('weekday', 'Den v týdnu', '0=Ne, 1–5, 6=So'),
+            ] %}
+            {% for name, label, hint in fields %}
+            <div>
+                <label class="form-label">{{ label }}</label>
+                <input type="text" name="{{ name }}" class="form-control" spellcheck="false"
+                    value="{{ build_form.get(name, '*') }}"
+                    placeholder="{{ hint }}">
+            </div>
+            {% endfor %}
+        </div>
+        <button class="btn btn-primary">Sestavit výraz</button>
+    </form>
+
+    {% if build_result %}
+        {% if build_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ build_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledný výraz</label>
+            <div style="background: var(--bg-light); padding: 12px 15px; border-radius: 4px; font-family: monospace; font-size: 18px;">
+                {{ build_result.expression }}
+            </div>
+            {% if build_result.description %}
+            <div style="margin-top: 10px; color: var(--text-light); font-size: 14px;">{{ build_result.description }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

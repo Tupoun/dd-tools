@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}JWT Decoder - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>JWT Decoder</h2>
+    <p>Dekódování JWT tokenů — header, payload a signature</p>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="form-group">
+            <label class="form-label">JWT Token</label>
+            <textarea name="token" class="form-control" rows="4" spellcheck="false"
+                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">{{ form_data.get('token', '') }}</textarea>
+        </div>
+        <button class="btn btn-primary">Dekódovat</button>
+    </form>
+</div>
+
+{% if result %}
+    {% if result.error %}
+    <div class="alert alert-error">{{ result.error }}</div>
+    {% else %}
+    <div class="card">
+        <h3>Header</h3>
+        <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px;">{{ result.header }}</pre>
+    </div>
+    <div class="card">
+        <h3>Payload</h3>
+        <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px;">{{ result.payload }}</pre>
+        {% if result.expiry %}
+        <div style="margin-top: 12px; font-size: 14px;">
+            <strong>Platnost (exp):</strong> {{ result.expiry.strftime('%d.%m.%Y %H:%M:%S') }}
+            {% if result.expired %}
+            <span style="color: var(--error);">— EXPIROVÁNO</span>
+            {% else %}
+            <span style="color: var(--success);">— platný</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="card">
+        <h3>Signature</h3>
+        <code style="font-size: 13px; color: var(--text-light); word-break: break-all;">{{ result.signature }}</code>
+        <p style="margin-top: 10px; font-size: 13px; color: var(--text-light);">
+            Podpis lze ověřit pouze se znalostí secret klíče — dekodér pouze zobrazuje obsah tokenu.
+        </p>
+    </div>
+    {% endif %}
+{% endif %}
+{% endblock %}
