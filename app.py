@@ -22,7 +22,7 @@ TOOLS = [
         'id': 'encoding',
         'name': 'Převod kódování',
         'description': 'Převod textových souborů mezi různými kódováními',
-        'route': 'encoding_converter'
+        'route': 'encoding_converter_page'
     }
     # Zde přidávej další nástroje
 ]
