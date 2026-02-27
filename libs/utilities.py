@@ -2,6 +2,7 @@
 Knihovna pro různé utility: Unix timestamp, unescape
 """
 
+import html
 import json
 import re
 from datetime import datetime, timezone
@@ -60,5 +61,23 @@ def unescape_unicode(text):
             text
         )
         return result, None
+    except Exception as e:
+        return None, f'Chyba: {e}'
+
+
+# ── HTML entity ────────────────────────────────────────────────────────────────
+
+def encode_html_entities(text):
+    """Escapuje HTML znaky: < → &lt;, & → &amp;, atd."""
+    try:
+        return html.escape(text, quote=True), None
+    except Exception as e:
+        return None, f'Chyba: {e}'
+
+
+def decode_html_entities(text):
+    """Odescapuje HTML entity: &lt; → <, &amp; → &, atd."""
+    try:
+        return html.unescape(text), None
     except Exception as e:
         return None, f'Chyba: {e}'

@@ -49,5 +49,25 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('pre.result-pre').forEach(function (pre) {
+        var btn = document.createElement('button');
+        btn.textContent = 'Kopírovat';
+        btn.className = 'copy-btn';
+        btn.addEventListener('click', function () {
+            navigator.clipboard.writeText(pre.textContent).then(function () {
+                btn.textContent = 'Zkopírováno!';
+                setTimeout(function () { btn.textContent = 'Kopírovat'; }, 2000);
+            });
+        });
+        var wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+        wrapper.appendChild(btn);
+    });
+});
+</script>
 </body>
 </html>
