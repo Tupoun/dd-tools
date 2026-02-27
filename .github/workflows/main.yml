@@ -1,0 +1,77 @@
+# .github/workflows/rosti_deploy.yml
+name: Deploy into Roští.cz
+on:
+    push:
+      branches: [master]
+jobs:
+    deploy:
+      runs-on: ubuntu-latest
+      env:
+        HOST: ssh.rosti.cz
+        USER: app
+        PORT: 13483
+        PYTHON_VERSION: 3.12
+      steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.ROSTI_DEPLOY_SSH_KEY }}
+      - name: Setup hostkey
+        run: |
+          echo "ssh.rosti.cz ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDZGP0XcXDq/fshn6Tq1sIuKqo5+P0oGqG3rud6j2fVk1upEf4PAfNFNbBzvyRpMDnauRuZnyg9UtthHEepFRQxEVJKTF3JGInfadtNzrUJl6/RwdcEs/k2EynmcinRbmR3e8a6ctOgvwQA7syK25nLmJnbwzMAwCfs0Kyu+j760cC4MOD7d8Sc16DI6UIibE2F6uaFLgv+Ox2Ik3fezUo9MBKbzDagymFO8bfgC8lNQgVyYWHZPRrA/imzwu9DmMZgt1hOuJH1M1pgG09bACgTIPDxE2AqjM9Na8CY+QpUBMxxgltVpE/tdvXwkZPisPU0dGSmsMWHBDIP2azJDGEf" > ./known_hosts
+      - name: Setup Python
+        run: |
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST /usr/local/bin/rosti python $PYTHON_VERSION
+      - name: Setup Supervisord
+        run: |
+          cat << EOF > rosti.app.conf
+          [program:app]
+          command=/srv/bin/primary_tech/gunicorn app:app --bind 127.0.0.1:8080 --workers 2
+          environment=PATH="/srv/bin/primary_tech:/usr/local/bin:/usr/bin:/bin",SECRET_KEY="${{ secrets.FLASK_SECRET_KEY }}",FLASK_ENV="production"
+          stopasgroup=true
+          directory=/srv/app/dd-tools
+          process_name=app
+          autostart=true
+          autorestart=true
+          stdout_logfile=/srv/log/app.log
+          stdout_logfile_maxbytes=2MB
+          stdout_logfile_backups=5
+          stdout_capture_maxbytes=2MB
+          stdout_events_enabled=false
+          redirect_stderr=true
+          EOF
+          scp -o UserKnownHostsFile=./known_hosts -P $PORT rosti.app.conf $USER@$HOST:/srv/conf/supervisor.d/app.conf
+          rm rosti.app.conf
+      - name: Setup Nginx
+        run: |
+          cat << EOF > rosti.nginx.conf
+          server {
+              listen       0.0.0.0:8000;
+              listen       [::]:8000;
+              location / {
+                      proxy_pass         http://127.0.0.1:8080/;
+                      proxy_redirect     default;
+                      proxy_set_header   X-Real-IP  \$remote_addr;
+                      proxy_set_header   Host       \$host;
+              }
+              location /static/ {
+                      alias /srv/app/dd-tools/static/;
+              }
+          }        
+          EOF
+          scp -o UserKnownHostsFile=./known_hosts -P $PORT rosti.nginx.conf $USER@$HOST:/srv/conf/nginx.d/app.conf
+          rm rosti.nginx.conf
+      - name: Copy code
+        run: |
+          rsync -ae "ssh -o UserKnownHostsFile=./known_hosts -p $PORT" --delete-after --exclude=.git --exclude=venv --exclude=__pycache__ --exclude=.env ./ $USER@$HOST:/srv/app/dd-tools/
+      - name: Install dependencies on server
+        run: |
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST "cd /srv/app/dd-tools && /srv/bin/primary_tech/pip install -r requirements.txt"
+      - name: Apply changes
+        run: |
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl reread
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl restart app
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl restart nginx
