@@ -12,11 +12,8 @@ jobs:
         PORT: 13483
         PYTHON_VERSION: 3.13.7
       steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.13.7"
-      - uses: webfactory/ssh-agent@v0.8.0
+      - uses: actions/checkout@v4
+      - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.ROSTI_DEPLOY_SSH_KEY }}
       - name: Setup hostkey
@@ -75,3 +72,7 @@ jobs:
           ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl reread
           ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl restart app
           ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl restart nginx
+      - name: Health check
+        run: |
+          sleep 5
+          curl --fail --silent --max-time 15 "https://drazan.cz" > /dev/null && echo "OK" || (echo "Health check failed" && exit 1)

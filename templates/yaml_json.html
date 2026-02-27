@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}YAML ↔ JSON - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>YAML ↔ JSON</h2>
+    <p>Konverze mezi YAML a JSON formáty</p>
+</div>
+
+<div class="card">
+    <form method="POST" id="yaml-form">
+        <input type="hidden" name="action" value="yaml_to_json">
+        <div class="form-group">
+            <label class="form-label">YAML → JSON</label>
+            <textarea name="yaml_input" class="form-control" rows="8" spellcheck="false"
+                placeholder="name: Jan&#10;age: 30&#10;city: Praha">{{ form_data.yaml_input if form_data.action == 'yaml_to_json' else '' }}</textarea>
+        </div>
+        <button class="btn btn-primary">Převést na JSON →</button>
+    </form>
+
+    {% if result and result.action == 'yaml_to_json' %}
+        {% if result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledek (JSON)</label>
+            <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 13px; overflow-x: auto; white-space: pre-wrap;">{{ result.output }}</pre>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<div class="card">
+    <form method="POST" id="json-form">
+        <input type="hidden" name="action" value="json_to_yaml">
+        <div class="form-group">
+            <label class="form-label">JSON → YAML</label>
+            <textarea name="json_input" class="form-control" rows="8" spellcheck="false"
+                placeholder='{"name": "Jan", "age": 30, "city": "Praha"}'>{{ form_data.json_input if form_data.action == 'json_to_yaml' else '' }}</textarea>
+        </div>
+        <button class="btn btn-primary">← Převést na YAML</button>
+    </form>
+
+    {% if result and result.action == 'json_to_yaml' %}
+        {% if result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledek (YAML)</label>
+            <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 13px; overflow-x: auto; white-space: pre-wrap;">{{ result.output }}</pre>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

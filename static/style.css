@@ -274,3 +274,27 @@ input[type="file"].form-control {
         grid-template-columns: 1fr;
     }
 }
+
+/* Copy button */
+.copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    font-size: 12px;
+    background-color: var(--burgundy-main);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.copy-btn:hover {
+    background-color: var(--burgundy-dark);
+}
+
+div:has(> pre.result-pre):hover .copy-btn {
+    opacity: 1;
+}

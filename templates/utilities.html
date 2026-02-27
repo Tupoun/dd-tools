@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h2>Utilities</h2>
-    <p>Unix timestamp, JSON unescape, Unicode unescape</p>
+    <p>Unix timestamp, JSON unescape, Unicode unescape, HTML entity encode/decode</p>
 </div>
 
 {# ── Unix timestamp ── #}
@@ -120,6 +120,38 @@
         <div style="margin-top: 20px;">
             <label class="form-label">Výsledek</label>
             <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px; white-space: pre-wrap;">{{ unicode_unescape_result.output }}</pre>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ── HTML entity encode/decode ── #}
+<div class="card">
+    <h3>HTML entity encode/decode</h3>
+    <p style="margin-bottom: 15px; color: var(--text-light); font-size: 14px;">
+        Encode: <code>&lt;div&gt;</code> → <code>&amp;lt;div&amp;gt;</code> &nbsp;|&nbsp;
+        Decode: <code>&amp;lt;div&amp;gt;</code> → <code>&lt;div&gt;</code>
+    </p>
+    <form method="POST">
+        <input type="hidden" name="action" value="html_encode" id="html-action">
+        <div class="form-group">
+            <label class="form-label">Vstup</label>
+            <textarea name="html_input" class="form-control" rows="4" spellcheck="false"
+                placeholder="&lt;div class=&quot;test&quot;&gt;Hello &amp; world&lt;/div&gt;">{{ form_data.html_input if form_data.action in ('html_encode', 'html_decode') else '' }}</textarea>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="document.getElementById('html-action').value='html_encode'">Encode →</button>
+            <button class="btn btn-primary" onclick="document.getElementById('html-action').value='html_decode'">← Decode</button>
+        </div>
+    </form>
+
+    {% if html_entity_result %}
+        {% if html_entity_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ html_entity_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledek</label>
+            <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px; white-space: pre-wrap;">{{ html_entity_result.output }}</pre>
         </div>
         {% endif %}
     {% endif %}

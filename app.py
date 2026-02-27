@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import os
 import io
 
-from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser, formatter, utilities, diff_tool, csv_json, uuid_generator
+from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser, formatter, utilities, diff_tool, csv_json, uuid_generator, yaml_json
 
 load_dotenv()
 
@@ -89,6 +89,12 @@ TOOLS = [
         'name': 'UUID',
         'description': 'Generátor UUID v1 a v4',
         'route': 'uuid_page'
+    },
+    {
+        'id': 'yaml_json',
+        'name': 'YAML ↔ JSON',
+        'description': 'Konverze mezi YAML a JSON',
+        'route': 'yaml_json_page'
     }
     # Zde přidávej další nástroje
 ]
@@ -330,6 +336,7 @@ def utilities_page():
     ts_result = None
     json_unescape_result = None
     unicode_unescape_result = None
+    html_entity_result = None
     form_data = {}
 
     if request.method == 'POST':
@@ -359,10 +366,23 @@ def utilities_page():
             output, error = utilities.unescape_unicode(text)
             unicode_unescape_result = {'output': output, 'error': error}
 
+        elif action == 'html_encode':
+            text = request.form.get('html_input', '')
+            form_data = {'action': action, 'html_input': text}
+            output, error = utilities.encode_html_entities(text)
+            html_entity_result = {'output': output, 'error': error, 'direction': 'encode'}
+
+        elif action == 'html_decode':
+            text = request.form.get('html_input', '')
+            form_data = {'action': action, 'html_input': text}
+            output, error = utilities.decode_html_entities(text)
+            html_entity_result = {'output': output, 'error': error, 'direction': 'decode'}
+
     return render_template('utilities.html', tools=TOOLS,
                            ts_result=ts_result,
                            json_unescape_result=json_unescape_result,
                            unicode_unescape_result=unicode_unescape_result,
+                           html_entity_result=html_entity_result,
                            form_data=form_data)
 
 
@@ -424,6 +444,30 @@ def uuid_page():
 
     return render_template('uuid.html', tools=TOOLS, result=result,
                            form_data=form_data, versions=uuid_generator.VERSIONS)
+
+
+@app.route('/yaml-json', methods=['GET', 'POST'])
+def yaml_json_page():
+    """Stránka pro konverzi YAML ↔ JSON"""
+    result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'yaml_to_json':
+            text = request.form.get('yaml_input', '')
+            form_data = {'action': action, 'yaml_input': text}
+            output, error = yaml_json.yaml_to_json(text)
+            result = {'action': action, 'output': output, 'error': error}
+
+        elif action == 'json_to_yaml':
+            text = request.form.get('json_input', '')
+            form_data = {'action': action, 'json_input': text}
+            output, error = yaml_json.json_to_yaml(text)
+            result = {'action': action, 'output': output, 'error': error}
+
+    return render_template('yaml_json.html', tools=TOOLS, result=result, form_data=form_data)
 
 
 @app.context_processor
