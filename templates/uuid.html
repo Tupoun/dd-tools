@@ -36,7 +36,7 @@
         {% else %}
         <div>
             <label class="form-label">Výsledek</label>
-            <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px; line-height: 1.8;">{% for uid in result.uuids %}{{ uid }}
+            <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px; line-height: 1.8;">{% for uid in result.uuids %}{{ uid }}
 {% endfor %}</pre>
         </div>
         {% endif %}
