@@ -11,7 +11,12 @@
     --text-light: #6c757d;
     --border-color: #dee2e6;
     --success: #28a745;
+    --success-bg: #d4edda;
+    --success-text: #155724;
     --error: #dc3545;
+    --error-bg: #f8d7da;
+    --error-text: #721c24;
+    --color-white: #ffffff;
 }
 
 * {
@@ -39,13 +44,13 @@ body {
     background: linear-gradient(180deg, var(--burgundy-dark) 0%, var(--burgundy-main) 100%);
     color: white;
     padding: 0;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-header {
     padding: 30px 20px;
     background-color: var(--burgundy-dark);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid var(--overlay-white-sm);
 }
 
 .sidebar-header h1 {
@@ -72,7 +77,7 @@ body {
 .nav-link {
     display: block;
     padding: 12px 20px;
-    color: white;
+    color: var(--color-white);
     text-decoration: none;
     transition: all 0.3s ease;
     border-left: 3px solid transparent;
@@ -153,12 +158,12 @@ body {
 .form-control:focus {
     outline: none;
     border-color: var(--burgundy-light);
-    box-shadow: 0 0 0 3px rgba(128, 0, 128, 0.1);
+    box-shadow: 0 0 0 3px var(--shadow-primary-sm);
 }
 
 select.form-control {
     cursor: pointer;
-    background-color: white;
+    background-color: var(--bg-white);
 }
 
 input[type="file"].form-control {
@@ -187,7 +192,7 @@ input[type="file"].form-control {
 .btn-primary:hover {
     background-color: var(--burgundy-dark);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(128, 0, 128, 0.3);
+    box-shadow: 0 4px 12px var(--shadow-primary-lg);
 }
 
 .btn-primary:active {
@@ -203,15 +208,15 @@ input[type="file"].form-control {
 }
 
 .alert-success {
-    background-color: #d4edda;
+    background-color: var(--success-bg);
     border-color: var(--success);
-    color: #155724;
+    color: var(--success-text);
 }
 
 .alert-error {
-    background-color: #f8d7da;
+    background-color: var(--error-bg);
     border-color: var(--error);
-    color: #721c24;
+    color: var(--error-text);
 }
 
 /* Tool grid */
@@ -236,7 +241,7 @@ input[type="file"].form-control {
 
 .tool-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(128, 0, 128, 0.15);
+    box-shadow: 0 6px 20px var(--shadow-primary-md);
 }
 
 .tool-card h3 {

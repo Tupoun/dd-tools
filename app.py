@@ -4,13 +4,19 @@ DD Tools - Flask Web Application
 
 from flask import Flask, render_template, request, send_file, flash, redirect, url_for
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
 import os
 import io
 
 from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser, formatter, utilities, diff_tool, csv_json, uuid_generator
 
+load_dotenv()
+
 app = Flask(__name__)
-app.secret_key = 'dd-tools-secret-key-change-in-production'  # Změň v produkci!
+app.secret_key = os.getenv('SECRET_KEY')
+
+if not app.secret_key:
+    raise ValueError("SECRET_KEY environment variable is not set!")
 
 # Konfigurace
 UPLOAD_FOLDER = '/tmp/dd-tools-uploads'

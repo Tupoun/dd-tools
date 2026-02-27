@@ -10,12 +10,12 @@ jobs:
         HOST: ssh.rosti.cz
         USER: app
         PORT: 13483
-        PYTHON_VERSION: 3.12
+        PYTHON_VERSION: 3.13
       steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.ROSTI_DEPLOY_SSH_KEY }}
@@ -29,8 +29,8 @@ jobs:
         run: |
           cat << EOF > rosti.app.conf
           [program:app]
-          command=/srv/bin/primary_tech/gunicorn app:app --bind 127.0.0.1:8080 --workers 2
-          environment=PATH="/srv/bin/primary_tech:/usr/local/bin:/usr/bin:/bin",SECRET_KEY="${{ secrets.FLASK_SECRET_KEY }}",FLASK_ENV="production"
+          command=/srv/venv/bin/gunicorn app:app --bind 127.0.0.1:8080 --workers 2
+          environment=PATH="/srv/venv/bin:/usr/local/bin:/usr/bin:/bin",SECRET_KEY="${{ secrets.FLASK_SECRET_KEY }}"
           stopasgroup=true
           directory=/srv/app/dd-tools
           process_name=app
@@ -69,7 +69,7 @@ jobs:
           rsync -ae "ssh -o UserKnownHostsFile=./known_hosts -p $PORT" --delete-after --exclude=.git --exclude=venv --exclude=__pycache__ --exclude=.env ./ $USER@$HOST:/srv/app/dd-tools/
       - name: Install dependencies on server
         run: |
-          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST "cd /srv/app/dd-tools && /srv/bin/primary_tech/pip install -r requirements.txt"
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST "cd /srv/app/dd-tools && /srv/venv/bin/pip install -r requirements.txt"
       - name: Apply changes
         run: |
           ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl reread
