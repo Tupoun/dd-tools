@@ -30,7 +30,7 @@
         {% else %}
         <div style="margin-top: 20px;">
             <label class="form-label">Výsledek</label>
-            <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px; white-space: pre-wrap; word-break: break-all;">{{ json_result.output }}</pre>
+            <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px; white-space: pre-wrap; word-break: break-all;">{{ json_result.output }}</pre>
         </div>
         {% endif %}
     {% endif %}
@@ -54,7 +54,7 @@
         {% else %}
         <div style="margin-top: 20px;">
             <label class="form-label">Výsledek</label>
-            <pre style="background: var(--bg-light); padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px; white-space: pre-wrap;">{{ xml_result.output }}</pre>
+            <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px; white-space: pre-wrap;">{{ xml_result.output }}</pre>
         </div>
         {% endif %}
     {% endif %}

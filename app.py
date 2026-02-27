@@ -79,16 +79,16 @@ TOOLS = [
         'route': 'diff_page'
     },
     {
-        'id': 'csv_json',
-        'name': 'CSV ↔ JSON',
-        'description': 'Konverze mezi CSV a JSON',
-        'route': 'csv_json_page'
-    },
-    {
         'id': 'uuid',
         'name': 'UUID',
         'description': 'Generátor UUID v1 a v4',
         'route': 'uuid_page'
+    },
+    {
+        'id': 'csv_json',
+        'name': 'CSV ↔ JSON',
+        'description': 'Konverze mezi CSV a JSON',
+        'route': 'csv_json_page'
     },
     {
         'id': 'yaml_json',
