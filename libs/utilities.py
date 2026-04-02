@@ -5,7 +5,7 @@ Knihovna pro různé utility: Unix timestamp, unescape
 import html
 import json
 import re
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 
 # ── Unix timestamp ────────────────────────────────────────────────────────────
@@ -61,6 +61,25 @@ def unescape_unicode(text):
             text
         )
         return result, None
+    except Exception as e:
+        return None, f'Chyba: {e}'
+
+
+# ── Epoch days ───────────────────────────────────────────────────────────────
+
+EPOCH = date(1970, 1, 1)
+
+def days_since_epoch(date_str=None):
+    """Vrátí počet dní od Unix epoch (1970-01-01) k zadanému nebo aktuálnímu datu."""
+    try:
+        if date_str and date_str.strip():
+            target = datetime.strptime(date_str.strip(), '%Y/%m/%d').date()
+        else:
+            target = date.today()
+        days = (target - EPOCH).days
+        return {'days': days, 'date': target}, None
+    except ValueError:
+        return None, 'Neplatný formát data. Použij YYYY/MM/DD, např. 2024/01/15'
     except Exception as e:
         return None, f'Chyba: {e}'
 
