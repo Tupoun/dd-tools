@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h2>Utilities</h2>
-    <p>Unix timestamp, JSON unescape, Unicode unescape, HTML entity encode/decode</p>
+    <p>Unix timestamp, Days from epoch, JSON unescape, Unicode unescape, HTML entity encode/decode</p>
 </div>
 
 {# ── Unix timestamp ── #}
@@ -69,6 +69,45 @@
     {% endif %}
 </div>
 
+{# ── Days from epoch ── #}
+<div class="card">
+    <h3>Počet dní od epoch</h3>
+    <p style="margin-bottom: 15px; color: var(--text-light); font-size: 14px;">
+        Vrátí počet dní od Unix epoch (1970-01-01) k zadanému datu. Bez zadání se použije dnešní datum.
+    </p>
+    <form method="POST">
+        <input type="hidden" name="action" value="epoch_days">
+        <div style="display: flex; gap: 15px; align-items: flex-end;">
+            <div style="flex: 1;">
+                <label class="form-label">Datum (volitelné)</label>
+                <input type="text" name="epoch_date" class="form-control" spellcheck="false"
+                    placeholder="YYYY/MM/DD"
+                    value="{{ form_data.epoch_date if form_data.action == 'epoch_days' else '' }}">
+            </div>
+            <div><button class="btn btn-primary">Vypočítat</button></div>
+        </div>
+    </form>
+
+    {% if epoch_days_result %}
+        {% if epoch_days_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ epoch_days_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 15px; display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <label class="form-label">Datum</label>
+                <input type="text" class="form-control" readonly
+                    value="{{ epoch_days_result.output.date.strftime('%Y-%m-%d') }}">
+            </div>
+            <div style="flex: 1;">
+                <label class="form-label">Počet dní od epoch</label>
+                <input type="text" class="form-control" readonly
+                    value="{{ epoch_days_result.output.days }}">
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
 {# ── JSON string unescape ── #}
 <div class="card">
     <h3>JSON string unescape</h3>
@@ -120,45 +159,6 @@
         <div style="margin-top: 20px;">
             <label class="form-label">Výsledek</label>
             <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px; white-space: pre-wrap;">{{ unicode_unescape_result.output }}</pre>
-        </div>
-        {% endif %}
-    {% endif %}
-</div>
-
-{# ── Počet dní od epoch ── #}
-<div class="card">
-    <h3>Počet dní od epoch</h3>
-    <p style="margin-bottom: 15px; color: var(--text-light); font-size: 14px;">
-        Vrátí počet dní od Unix epoch (1970-01-01) k zadanému datu. Bez zadání se použije dnešní datum.
-    </p>
-    <form method="POST">
-        <input type="hidden" name="action" value="epoch_days">
-        <div style="display: flex; gap: 15px; align-items: flex-end;">
-            <div style="flex: 1;">
-                <label class="form-label">Datum (volitelné)</label>
-                <input type="text" name="epoch_date" class="form-control" spellcheck="false"
-                    placeholder="YYYY/MM/DD"
-                    value="{{ form_data.epoch_date if form_data.action == 'epoch_days' else '' }}">
-            </div>
-            <div><button class="btn btn-primary">Vypočítat</button></div>
-        </div>
-    </form>
-
-    {% if epoch_days_result %}
-        {% if epoch_days_result.error %}
-        <div class="alert alert-error" style="margin-top: 15px;">{{ epoch_days_result.error }}</div>
-        {% else %}
-        <div style="margin-top: 15px; display: flex; gap: 20px;">
-            <div style="flex: 1;">
-                <label class="form-label">Datum</label>
-                <input type="text" class="form-control" readonly
-                    value="{{ epoch_days_result.output.date.strftime('%Y-%m-%d') }}">
-            </div>
-            <div style="flex: 1;">
-                <label class="form-label">Počet dní od epoch</label>
-                <input type="text" class="form-control" readonly
-                    value="{{ epoch_days_result.output.days }}">
-            </div>
         </div>
         {% endif %}
     {% endif %}
