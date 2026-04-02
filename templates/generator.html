@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Generátor - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Generátor testovacích dat</h2>
+    <p>Čísla účtů dle ČNB, rodná čísla dle českých standardů</p>
+</div>
+
+{# ── Čísla účtů ── #}
+<div class="card">
+    <h3>Čísla účtů</h3>
+    <p style="margin-bottom: 15px; color: var(--text-light); font-size: 14px;">
+        Čísla splňují mod-11 kontrolu ČNB. Prefix je vždy nenulový, bez úvodních nul.
+    </p>
+    <form method="POST">
+        <input type="hidden" name="action" value="generate_accounts">
+        <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+            <div>
+                <label class="form-label">Počet (1–100)</label>
+                <input type="number" name="acc_count" class="form-control" min="1" max="100"
+                    style="width: 120px;"
+                    value="{{ form_data.acc_count if form_data.action == 'generate_accounts' else '10' }}">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                    <input type="checkbox" name="acc_without_prefix" value="1"
+                        {% if form_data.action != 'generate_accounts' or form_data.acc_without_prefix %}checked{% endif %}>
+                    Bez prefixu
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                    <input type="checkbox" name="acc_with_prefix" value="1"
+                        {% if form_data.action == 'generate_accounts' and form_data.acc_with_prefix %}checked{% endif %}>
+                    S prefixem
+                </label>
+            </div>
+            <div><button class="btn btn-primary">Generovat</button></div>
+        </div>
+    </form>
+
+    {% if acc_result %}
+        {% if acc_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ acc_result.error }}</div>
+        {% else %}
+        <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+            {% if acc_result.output.without_prefix %}
+            <div style="flex: 1; min-width: 200px;">
+                <label class="form-label">Bez prefixu ({{ acc_result.output.without_prefix | length }} ks)</label>
+                <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px;">{{ acc_result.output.without_prefix | join('\n') }}</pre>
+            </div>
+            {% endif %}
+            {% if acc_result.output.with_prefix %}
+            <div style="flex: 1; min-width: 200px;">
+                <label class="form-label">S prefixem ({{ acc_result.output.with_prefix | length }} ks)</label>
+                <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px;">{{ acc_result.output.with_prefix | join('\n') }}</pre>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ── Rodná čísla ── #}
+<div class="card">
+    <h3>Rodná čísla</h3>
+    <p style="margin-bottom: 15px; color: var(--text-light); font-size: 14px;">
+        Starý standard (pre-1954): 9 číslic, bez mod-11. Nový standard: 10 číslic, dělitelné 11.
+        Varianta +20/+70: u mužů měsíc +20, u žen měsíc +70.
+    </p>
+    <form method="POST">
+        <input type="hidden" name="action" value="generate_birth_numbers">
+
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; align-items: flex-start;">
+
+            {# Počet + pohlaví #}
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <label class="form-label">Počet (1–200)</label>
+                    <input type="number" name="bn_count" class="form-control" min="1" max="200"
+                        style="width: 120px;"
+                        value="{{ form_data.bn_count if form_data.action == 'generate_birth_numbers' else '10' }}">
+                </div>
+                <div>
+                    <label class="form-label">Pohlaví</label>
+                    <select name="bn_gender" class="form-control" style="width: 150px;">
+                        <option value="both" {% if form_data.action != 'generate_birth_numbers' or form_data.bn_gender == 'both' %}selected{% endif %}>Obojí</option>
+                        <option value="M" {% if form_data.action == 'generate_birth_numbers' and form_data.bn_gender == 'M' %}selected{% endif %}>Muž</option>
+                        <option value="F" {% if form_data.action == 'generate_birth_numbers' and form_data.bn_gender == 'F' %}selected{% endif %}>Žena</option>
+                    </select>
+                </div>
+            </div>
+
+            {# Varianty #}
+            <div>
+                <label class="form-label">Varianty</label>
+                <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                        <input type="checkbox" name="bn_variants" value="old"
+                            {% if form_data.action == 'generate_birth_numbers' and 'old' in form_data.bn_variants %}checked{% endif %}>
+                        Starý standard (XXX)
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                        <input type="checkbox" name="bn_variants" value="new_normal"
+                            {% if form_data.action != 'generate_birth_numbers' or 'new_normal' in form_data.bn_variants %}checked{% endif %}>
+                        Nový standard (XXXX)
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                        <input type="checkbox" name="bn_variants" value="new_extended"
+                            {% if form_data.action == 'generate_birth_numbers' and 'new_extended' in form_data.bn_variants %}checked{% endif %}>
+                        Nový standard +20/+70 (XXXX)
+                    </label>
+                </div>
+            </div>
+
+            {# Datum #}
+            <div>
+                <label class="form-label">Datum narození</label>
+                <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                        <input type="radio" name="bn_date_mode" value="range" id="mode-range"
+                            {% if form_data.action != 'generate_birth_numbers' or form_data.bn_date_mode == 'range' %}checked{% endif %}
+                            onchange="toggleDateMode('range')">
+                        Rozsah věku
+                    </label>
+                    <div id="section-range" style="display: flex; gap: 10px; align-items: center; padding-left: 22px;">
+                        <div>
+                            <label class="form-label" style="font-size: 12px;">Od (let)</label>
+                            <input type="number" name="bn_age_min" class="form-control" min="0" max="130"
+                                style="width: 80px;"
+                                value="{{ form_data.bn_age_min if form_data.action == 'generate_birth_numbers' else '20' }}">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 12px;">Do (let)</label>
+                            <input type="number" name="bn_age_max" class="form-control" min="0" max="130"
+                                style="width: 80px;"
+                                value="{{ form_data.bn_age_max if form_data.action == 'generate_birth_numbers' else '40' }}">
+                        </div>
+                    </div>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                        <input type="radio" name="bn_date_mode" value="specific" id="mode-specific"
+                            {% if form_data.action == 'generate_birth_numbers' and form_data.bn_date_mode == 'specific' %}checked{% endif %}
+                            onchange="toggleDateMode('specific')">
+                        Konkrétní datum
+                    </label>
+                    <div id="section-specific" style="padding-left: 22px;">
+                        <input type="text" name="bn_date" class="form-control" spellcheck="false"
+                            placeholder="YYYY/MM/DD"
+                            style="width: 160px;"
+                            value="{{ form_data.bn_date if form_data.action == 'generate_birth_numbers' else '' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary">Generovat</button>
+    </form>
+
+    {% if bn_result %}
+        {% if bn_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ bn_result.error }}</div>
+        {% else %}
+        <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+            {% for variant_key, label in [('old', 'Starý standard (XXX)'), ('new_normal', 'Nový standard (XXXX)'), ('new_extended', 'Nový standard +20/+70 (XXXX)')] %}
+                {% if bn_result.output[variant_key] %}
+                <div style="flex: 1; min-width: 200px;">
+                    <label class="form-label">{{ label }} ({{ bn_result.output[variant_key] | length }} ks)</label>
+                    <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px;">{{ bn_result.output[variant_key] | join('\n') }}</pre>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<script>
+function toggleDateMode(mode) {
+    var rangeSection = document.getElementById('section-range');
+    var specificSection = document.getElementById('section-specific');
+    if (mode === 'range') {
+        rangeSection.style.display = 'flex';
+        rangeSection.querySelectorAll('input').forEach(function(i) { i.disabled = false; });
+        specificSection.style.display = 'none';
+        specificSection.querySelector('input').disabled = true;
+    } else {
+        rangeSection.style.display = 'none';
+        rangeSection.querySelectorAll('input').forEach(function(i) { i.disabled = true; });
+        specificSection.style.display = 'block';
+        specificSection.querySelector('input').disabled = false;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    var modeRange = document.getElementById('mode-range');
+    toggleDateMode(modeRange.checked ? 'range' : 'specific');
+});
+</script>
+{% endblock %}

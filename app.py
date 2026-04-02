@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import os
 import io
 
-from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser, formatter, utilities, diff_tool, csv_json, uuid_generator, yaml_json
+from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser, formatter, utilities, diff_tool, csv_json, uuid_generator, yaml_json, generator
 
 load_dotenv()
 
@@ -95,8 +95,13 @@ TOOLS = [
         'name': 'YAML ↔ JSON',
         'description': 'Konverze mezi YAML a JSON',
         'route': 'yaml_json_page'
+    },
+    {
+        'id': 'generator',
+        'name': 'Generátor',
+        'description': 'Čísla účtů dle ČNB, rodná čísla',
+        'route': 'generator_page'
     }
-    # Zde přidávej další nástroje
 ]
 
 
@@ -337,6 +342,7 @@ def utilities_page():
     json_unescape_result = None
     unicode_unescape_result = None
     html_entity_result = None
+    epoch_days_result = None
     form_data = {}
 
     if request.method == 'POST':
@@ -378,10 +384,17 @@ def utilities_page():
             output, error = utilities.decode_html_entities(text)
             html_entity_result = {'output': output, 'error': error, 'direction': 'decode'}
 
+        elif action == 'epoch_days':
+            date_str = request.form.get('epoch_date', '')
+            form_data = {'action': action, 'epoch_date': date_str}
+            output, error = utilities.days_since_epoch(date_str)
+            epoch_days_result = {'output': output, 'error': error}
+
     return render_template('utilities.html', tools=TOOLS,
                            ts_result=ts_result,
                            json_unescape_result=json_unescape_result,
                            unicode_unescape_result=unicode_unescape_result,
+                           epoch_days_result=epoch_days_result,
                            html_entity_result=html_entity_result,
                            form_data=form_data)
 
@@ -468,6 +481,85 @@ def yaml_json_page():
             result = {'action': action, 'output': output, 'error': error}
 
     return render_template('yaml_json.html', tools=TOOLS, result=result, form_data=form_data)
+
+
+@app.route('/generator', methods=['GET', 'POST'])
+def generator_page():
+    """Stránka pro generování testovacích dat"""
+    acc_result = None
+    bn_result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'generate_accounts':
+            try:
+                count = int(request.form.get('acc_count', 10))
+            except ValueError:
+                count = 0
+            with_prefix = bool(request.form.get('acc_with_prefix'))
+            without_prefix = bool(request.form.get('acc_without_prefix'))
+            form_data = {
+                'action': action,
+                'acc_count': count,
+                'acc_with_prefix': with_prefix,
+                'acc_without_prefix': without_prefix,
+            }
+            output, error = generator.generate_account_numbers(count, with_prefix, without_prefix)
+            acc_result = {'output': output, 'error': error}
+
+        elif action == 'generate_birth_numbers':
+            try:
+                count = int(request.form.get('bn_count', 10))
+            except ValueError:
+                count = 0
+            gender = request.form.get('bn_gender', 'both')
+            variants = request.form.getlist('bn_variants')
+            date_mode = request.form.get('bn_date_mode', 'range')
+            form_data = {
+                'action': action,
+                'bn_count': count,
+                'bn_gender': gender,
+                'bn_variants': variants,
+                'bn_date_mode': date_mode,
+                'bn_age_min': request.form.get('bn_age_min', '20'),
+                'bn_age_max': request.form.get('bn_age_max', '40'),
+                'bn_date': request.form.get('bn_date', ''),
+            }
+
+            if date_mode == 'range':
+                try:
+                    age_min = int(request.form.get('bn_age_min', 20))
+                    age_max = int(request.form.get('bn_age_max', 40))
+                except ValueError:
+                    bn_result = {'output': None, 'error': 'Věkový rozsah musí být celé číslo.'}
+                    return render_template('generator.html', tools=TOOLS,
+                                           acc_result=acc_result, bn_result=bn_result,
+                                           form_data=form_data)
+                output, error = generator.generate_birth_numbers(
+                    count, gender, variants, 'range',
+                    age_min=age_min, age_max=age_max
+                )
+            else:
+                from datetime import datetime
+                date_str = request.form.get('bn_date', '').strip()
+                try:
+                    specific_date = datetime.strptime(date_str, '%Y/%m/%d').date()
+                except ValueError:
+                    bn_result = {'output': None, 'error': 'Neplatný formát data. Použij YYYY/MM/DD, např. 1990/06/15.'}
+                    return render_template('generator.html', tools=TOOLS,
+                                           acc_result=acc_result, bn_result=bn_result,
+                                           form_data=form_data)
+                output, error = generator.generate_birth_numbers(
+                    count, gender, variants, 'specific',
+                    specific_date=specific_date
+                )
+            bn_result = {'output': output, 'error': error}
+
+    return render_template('generator.html', tools=TOOLS,
+                           acc_result=acc_result, bn_result=bn_result,
+                           form_data=form_data)
 
 
 @app.context_processor
