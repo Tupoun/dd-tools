@@ -6,13 +6,18 @@ import html
 import json
 import re
 from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 # ── Unix timestamp ────────────────────────────────────────────────────────────
 
-def timestamp_to_datetime(ts):
+def timestamp_to_datetime(ts, unit='s'):
     try:
         ts = float(ts)
+        if unit == 'ms':
+            ts = ts / 1_000
+        elif unit == 'us':
+            ts = ts / 1_000_000
         utc   = datetime.fromtimestamp(ts, tz=timezone.utc)
         local = datetime.fromtimestamp(ts)
         return {'utc': utc, 'local': local}, None
@@ -20,7 +25,13 @@ def timestamp_to_datetime(ts):
         return None, f'Neplatný timestamp: {e}'
 
 
-def datetime_to_timestamp(dt_str):
+def datetime_to_timestamp(dt_str, unit='s', timezone_name='UTC'):
+    try:
+        tz = ZoneInfo(timezone_name)
+    except (ZoneInfoNotFoundError, Exception):
+        tz = timezone.utc
+        timezone_name = 'UTC'
+
     formats = [
         '%Y-%m-%dT%H:%M:%S',
         '%Y-%m-%d %H:%M:%S',
@@ -30,13 +41,29 @@ def datetime_to_timestamp(dt_str):
         '%d.%m.%Y %H:%M',
         '%d.%m.%Y',
     ]
-    for fmt in formats:
-        try:
-            dt = datetime.strptime(dt_str.strip(), fmt)
-            return int(dt.timestamp()), None
-        except ValueError:
-            continue
-    return None, 'Nepodporovaný formát. Použij např. 2024-01-15 09:30:00 nebo 15.01.2024 09:30:00'
+
+    if not dt_str or not dt_str.strip():
+        dt = datetime.now(tz=tz)
+    else:
+        dt = None
+        for fmt in formats:
+            try:
+                dt = datetime.strptime(dt_str.strip(), fmt).replace(tzinfo=tz)
+                break
+            except ValueError:
+                continue
+        if dt is None:
+            return None, 'Nepodporovaný formát. Použij např. 2024-01-15 09:30:00 nebo 15.01.2024 09:30:00'
+
+    ts = dt.timestamp()
+    if unit == 'ms':
+        value = int(ts * 1_000)
+    elif unit == 'us':
+        value = int(ts * 1_000_000)
+    else:
+        value = int(ts)
+
+    return {'value': value, 'unit': unit, 'timezone': timezone_name}, None
 
 
 # ── Unescape ──────────────────────────────────────────────────────────────────

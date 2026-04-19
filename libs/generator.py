@@ -34,17 +34,39 @@ def _generate_account_part(min_len, max_len):
     return None
 
 
-def generate_account_numbers(count, with_prefix, without_prefix):
+def generate_iban(account_number, prefix, bank_code):
+    """Vygeneruje IBAN pro CZ bankovní účet (MOD-97)."""
+    bank_padded = str(bank_code).zfill(4)
+    prefix_padded = str(prefix).zfill(6)
+    account_padded = str(account_number).zfill(10)
+    basic = bank_padded + prefix_padded + account_padded
+    rearranged = basic + 'CZ00'
+    numeric_str = ''.join(str(ord(ch) - ord('A') + 10) if ch.isalpha() else ch for ch in rearranged)
+    check = 98 - (int(numeric_str) % 97)
+    return f'CZ{check:02d}{basic}'
+
+
+def format_iban(iban, grouped=False):
+    """Formátuje IBAN; grouped=True oddělí každé 4 znaky mezerou."""
+    if grouped:
+        return ' '.join(iban[i:i+4] for i in range(0, len(iban), 4))
+    return iban
+
+
+def generate_account_numbers(count, with_prefix, without_prefix, bank_code=None, iban_format='plain'):
     """
     Vygeneruje čísla účtů.
 
     Vrátí (result, error) kde result = {'with_prefix': [...], 'without_prefix': [...]}.
+    Pokud je bank_code zadán, položky jsou dicty {'account': ..., 'iban': ...},
+    jinak prosté stringy (zpětná kompatibilita).
     """
     if not with_prefix and not without_prefix:
         return None, 'Zvol alespoň jednu variantu.'
     if not (1 <= count <= 100):
         return None, 'Počet musí být v rozmezí 1–100.'
 
+    use_iban = bool(bank_code)
     result = {'with_prefix': [], 'without_prefix': []}
 
     for _ in range(count):
@@ -52,14 +74,22 @@ def generate_account_numbers(count, with_prefix, without_prefix):
             acc = _generate_account_part(6, 10)
             if not acc:
                 return None, 'Generování čísla účtu selhalo, zkus to znovu.'
-            result['without_prefix'].append(acc)
+            if use_iban:
+                iban = format_iban(generate_iban(acc, 0, bank_code), grouped=(iban_format == 'grouped'))
+                result['without_prefix'].append({'account': acc, 'iban': iban})
+            else:
+                result['without_prefix'].append(acc)
 
         if with_prefix:
             acc = _generate_account_part(6, 10)
             prefix = _generate_account_part(2, 6)
             if not acc or not prefix:
                 return None, 'Generování čísla účtu selhalo, zkus to znovu.'
-            result['with_prefix'].append(f'{prefix}-{acc}')
+            if use_iban:
+                iban = format_iban(generate_iban(acc, prefix, bank_code), grouped=(iban_format == 'grouped'))
+                result['with_prefix'].append({'account': f'{prefix}-{acc}', 'iban': iban})
+            else:
+                result['with_prefix'].append(f'{prefix}-{acc}')
 
     return result, None
 
