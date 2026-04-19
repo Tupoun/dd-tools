@@ -350,14 +350,17 @@ def utilities_page():
 
         if action == 'ts_to_dt':
             ts = request.form.get('timestamp', '')
-            form_data = {'action': action, 'timestamp': ts}
-            output, error = utilities.timestamp_to_datetime(ts)
+            unit = request.form.get('unit', 's')
+            form_data = {'action': action, 'timestamp': ts, 'unit': unit}
+            output, error = utilities.timestamp_to_datetime(ts, unit=unit)
             ts_result = {'output': output, 'error': error, 'direction': 'to_dt'}
 
         elif action == 'dt_to_ts':
             dt_str = request.form.get('datetime', '')
-            form_data = {'action': action, 'datetime': dt_str}
-            output, error = utilities.datetime_to_timestamp(dt_str)
+            unit = request.form.get('unit', 's')
+            timezone_name = request.form.get('timezone', 'UTC')
+            form_data = {'action': action, 'datetime': dt_str, 'unit': unit, 'timezone': timezone_name}
+            output, error = utilities.datetime_to_timestamp(dt_str, unit=unit, timezone_name=timezone_name)
             ts_result = {'output': output, 'error': error, 'direction': 'to_ts'}
 
         elif action == 'json_unescape':
@@ -500,13 +503,20 @@ def generator_page():
                 count = 0
             with_prefix = bool(request.form.get('acc_with_prefix'))
             without_prefix = bool(request.form.get('acc_without_prefix'))
+            bank_code = request.form.get('bank_code', '').strip()
+            iban_format = request.form.get('iban_format', 'plain')
             form_data = {
                 'action': action,
                 'acc_count': count,
                 'acc_with_prefix': with_prefix,
                 'acc_without_prefix': without_prefix,
+                'bank_code': bank_code,
+                'iban_format': iban_format,
             }
-            output, error = generator.generate_account_numbers(count, with_prefix, without_prefix)
+            output, error = generator.generate_account_numbers(
+                count, with_prefix, without_prefix,
+                bank_code=bank_code, iban_format=iban_format
+            )
             acc_result = {'output': output, 'error': error}
 
         elif action == 'generate_birth_numbers':

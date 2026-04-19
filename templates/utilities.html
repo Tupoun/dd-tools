@@ -11,17 +11,32 @@
 {# ── Unix timestamp ── #}
 <div class="card">
     <h3>Unix timestamp</h3>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var tzFields = document.querySelectorAll('.tz-field');
+            var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            tzFields.forEach(function(f) { f.value = tz; });
+        });
+    </script>
 
     <form method="POST" style="margin-bottom: 20px;">
         <input type="hidden" name="action" value="ts_to_dt">
-        <div style="display: flex; gap: 15px; align-items: flex-end;">
+        <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
             <div style="flex: 1;">
                 <label class="form-label">Timestamp → datum a čas</label>
                 <input type="text" name="timestamp" class="form-control" spellcheck="false"
                     placeholder="1700000000"
                     value="{{ form_data.timestamp if form_data.action == 'ts_to_dt' else '' }}">
             </div>
-            <div><button class="btn btn-primary">Převést →</button></div>
+            <div>
+                <label class="form-label">Jednotky</label>
+                <select name="unit" class="form-control" style="width: 150px;">
+                    <option value="s" {% if form_data.action != 'ts_to_dt' or form_data.unit == 's' %}selected{% endif %}>Sekundy</option>
+                    <option value="ms" {% if form_data.action == 'ts_to_dt' and form_data.unit == 'ms' %}selected{% endif %}>Milisekundy</option>
+                    <option value="us" {% if form_data.action == 'ts_to_dt' and form_data.unit == 'us' %}selected{% endif %}>Mikrosekundy</option>
+                </select>
+            </div>
+            <div style="align-self: flex-end;"><button class="btn btn-primary">Převést →</button></div>
         </div>
     </form>
 
@@ -46,14 +61,23 @@
 
     <form method="POST">
         <input type="hidden" name="action" value="dt_to_ts">
-        <div style="display: flex; gap: 15px; align-items: flex-end;">
+        <input type="hidden" name="timezone" value="UTC" class="tz-field">
+        <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
             <div style="flex: 1;">
                 <label class="form-label">Datum a čas → timestamp</label>
                 <input type="text" name="datetime" class="form-control" spellcheck="false"
-                    placeholder="2024-01-15 09:30:00"
+                    placeholder="2024-01-15 09:30:00 (prázdné = aktuální čas)"
                     value="{{ form_data.datetime if form_data.action == 'dt_to_ts' else '' }}">
             </div>
-            <div><button class="btn btn-primary">← Převést</button></div>
+            <div>
+                <label class="form-label">Jednotky</label>
+                <select name="unit" class="form-control" style="width: 150px;">
+                    <option value="s" {% if form_data.action != 'dt_to_ts' or form_data.unit == 's' %}selected{% endif %}>Sekundy</option>
+                    <option value="ms" {% if form_data.action == 'dt_to_ts' and form_data.unit == 'ms' %}selected{% endif %}>Milisekundy</option>
+                    <option value="us" {% if form_data.action == 'dt_to_ts' and form_data.unit == 'us' %}selected{% endif %}>Mikrosekundy</option>
+                </select>
+            </div>
+            <div style="align-self: flex-end;"><button class="btn btn-primary">← Převést</button></div>
         </div>
     </form>
 
@@ -63,7 +87,8 @@
         {% else %}
         <div style="margin-top: 15px;">
             <label class="form-label">Timestamp</label>
-            <input type="text" class="form-control" readonly value="{{ ts_result.output }}">
+            <input type="text" class="form-control" readonly value="{{ ts_result.output.value }}">
+            <div style="margin-top: 6px; font-size: 13px; color: var(--text-light);">{{ ts_result.output.timezone }}</div>
         </div>
         {% endif %}
     {% endif %}
