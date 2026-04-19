@@ -14,9 +14,10 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 def timestamp_to_datetime(ts, unit='s'):
     try:
         ts = float(ts)
-        if unit == 'ms':
+        normalized_unit = unit if unit in ('s', 'ms', 'us') else 's'  # unknown unit defaults to seconds
+        if normalized_unit == 'ms':
             ts = ts / 1_000
-        elif unit == 'us':
+        elif normalized_unit == 'us':
             ts = ts / 1_000_000
         utc   = datetime.fromtimestamp(ts, tz=timezone.utc)
         local = datetime.fromtimestamp(ts)
@@ -56,14 +57,15 @@ def datetime_to_timestamp(dt_str, unit='s', timezone_name='UTC'):
             return None, 'Nepodporovaný formát. Použij např. 2024-01-15 09:30:00 nebo 15.01.2024 09:30:00'
 
     ts = dt.timestamp()
-    if unit == 'ms':
+    normalized_unit = unit if unit in ('s', 'ms', 'us') else 's'  # unknown unit defaults to seconds
+    if normalized_unit == 'ms':
         value = int(ts * 1_000)
-    elif unit == 'us':
+    elif normalized_unit == 'us':
         value = int(ts * 1_000_000)
     else:
         value = int(ts)
 
-    return {'value': value, 'unit': unit, 'timezone': timezone_name}, None
+    return {'value': value, 'unit': normalized_unit, 'timezone': timezone_name}, None
 
 
 # ── Unescape ──────────────────────────────────────────────────────────────────

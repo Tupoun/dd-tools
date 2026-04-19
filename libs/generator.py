@@ -2,6 +2,7 @@
 Generátor testovacích dat: čísla účtů dle ČNB, rodná čísla dle českých standardů
 """
 
+import re
 import random
 from datetime import date, timedelta
 
@@ -65,6 +66,9 @@ def generate_account_numbers(count, with_prefix, without_prefix, bank_code=None,
         return None, 'Zvol alespoň jednu variantu.'
     if not (1 <= count <= 100):
         return None, 'Počet musí být v rozmezí 1–100.'
+
+    if bank_code and not re.fullmatch(r'\d{4}', str(bank_code)):
+        return None, 'Kód banky musí mít přesně 4 číslice (0–9).'
 
     use_iban = bool(bank_code)
     result = {'with_prefix': [], 'without_prefix': []}
