@@ -58,6 +58,23 @@ def convert_content(content, source_encoding, target_encoding, error_mode='repla
         return None, f"Neočekávaná chyba: {str(e)}"
 
 
+def convert_text(text, source_encoding, target_encoding, error_mode='replace'):
+    """
+    Převede text zadaný jako řetězec mezi kódováními.
+    Vrací (výsledný řetězec, chybová zpráva nebo None).
+    """
+    try:
+        encoded = text.encode(source_encoding, errors=error_mode)
+        result = encoded.decode(target_encoding, errors=error_mode)
+        return result, None
+    except UnicodeEncodeError:
+        return None, f"Chyba při enkódování: Zdrojové kódování '{source_encoding}' neodpovídá vstupnímu textu."
+    except UnicodeDecodeError:
+        return None, f"Chyba při dekódování: Výsledek nelze interpretovat jako '{target_encoding}'."
+    except Exception as e:
+        return None, f"Neočekávaná chyba: {str(e)}"
+
+
 def generate_output_filename(original_filename, target_encoding):
     """
     Vytvoří název výstupního souboru

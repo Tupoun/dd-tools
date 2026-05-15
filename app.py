@@ -111,14 +111,35 @@ def index():
     return render_template('index.html', tools=TOOLS)
 
 
-@app.route('/encoding')
+@app.route('/encoding', methods=['GET', 'POST'])
 def encoding_converter_page():
     """Stránka pro převod kódování"""
     encodings = encoding_converter.get_encodings()
     error_modes = encoding_converter.get_error_modes()
+    result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        source_encoding = request.form.get('source_encoding')
+        target_encoding = request.form.get('target_encoding')
+        error_mode = request.form.get('error_mode', 'replace')
+        text = request.form.get('text_input', '')
+        form_data = {
+            'source_encoding': source_encoding,
+            'target_encoding': target_encoding,
+            'error_mode': error_mode,
+            'text_input': text,
+        }
+        output, error = encoding_converter.convert_text(
+            text, source_encoding, target_encoding, error_mode
+        )
+        result = {'output': output, 'error': error}
+
     return render_template('encoding.html',
                            encodings=encodings,
                            error_modes=error_modes,
+                           result=result,
+                           form_data=form_data,
                            tools=TOOLS)
 
 
