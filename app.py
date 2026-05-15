@@ -4,6 +4,8 @@ DD Tools - Flask Web Application
 
 from flask import Flask, render_template, request, send_file, flash, redirect, url_for
 from werkzeug.utils import secure_filename
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 import os
 import io
@@ -14,6 +16,13 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["60 per minute"],
+    storage_uri="memory://",
+)
 
 if not app.secret_key:
     raise ValueError("SECRET_KEY environment variable is not set!")
@@ -101,8 +110,20 @@ TOOLS = [
         'name': 'Generátor',
         'description': 'Čísla účtů dle ČNB, rodná čísla',
         'route': 'generator_page'
+    },
+    {
+        'id': 'sql_joins',
+        'name': 'SQL JOINy',
+        'description': 'Přehled typů SQL JOIN s příklady',
+        'route': 'sql_joins_page'
     }
 ]
+
+
+@app.route('/robots.txt')
+@limiter.exempt
+def robots_txt():
+    return app.response_class("User-agent: *\nDisallow: /\n", mimetype='text/plain')
 
 
 @app.route('/')
@@ -591,6 +612,11 @@ def generator_page():
     return render_template('generator.html', tools=TOOLS,
                            acc_result=acc_result, bn_result=bn_result,
                            form_data=form_data)
+
+
+@app.route('/sql-joins')
+def sql_joins_page():
+    return render_template('sql_joins.html', tools=TOOLS)
 
 
 @app.context_processor

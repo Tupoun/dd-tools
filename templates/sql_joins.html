@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}SQL JOIN — přehled{% endblock %}
+
+{% block content %}
+<style>
+  .join-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .join-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .join-card:hover {
+    border-color: var(--purple-mid);
+    box-shadow: var(--shadow-md);
+  }
+  .join-card.wide {
+    grid-column: 1 / -1;
+  }
+
+  .join-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+  }
+
+  .join-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+
+  .join-tag {
+    font-size: 0.65rem;
+    font-family: 'Courier New', monospace;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: hsla(287, 44%, 27%, 0.08);
+    color: var(--purple-main);
+    border: 1px solid hsla(287, 44%, 27%, 0.2);
+    white-space: nowrap;
+  }
+  .join-tag.warn {
+    background: hsla(0, 80%, 50%, 0.08);
+    color: var(--error);
+    border-color: hsla(0, 80%, 50%, 0.2);
+  }
+
+  .join-section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-light);
+    margin: 1.75rem 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .venn {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.9rem;
+  }
+
+  .join-desc {
+    font-size: 0.82rem;
+    color: var(--text-light);
+    line-height: 1.55;
+    margin-bottom: 0.75rem;
+  }
+  .join-desc strong { color: var(--text-dark); }
+
+  .join-code, .join-example {
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+    white-space: pre;
+    overflow-x: auto;
+    margin-bottom: 0.5rem;
+  }
+  .join-code {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    color: var(--purple-mid);
+  }
+  .join-example {
+    background: hsla(142, 70%, 45%, 0.05);
+    border: 1px solid hsla(142, 70%, 45%, 0.2);
+    color: hsl(142, 50%, 35%);
+  }
+
+  .join-example-label {
+    font-size: 0.6rem;
+    font-family: 'Courier New', monospace;
+    color: hsl(142, 50%, 40%);
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .kw  { color: var(--purple-main); font-weight: 700; }
+  .tbl { color: hsl(38, 70%, 40%); }
+  .con { color: hsl(210, 60%, 45%); }
+  .cm  { color: var(--text-light); font-style: italic; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .join-note {
+    font-size: 0.76rem;
+    color: var(--text-light);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    line-height: 1.55;
+  }
+  .join-note strong { color: var(--text-dark); }
+  .join-note code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    background: var(--bg-light);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--purple-mid);
+  }
+
+  @media (max-width: 600px) {
+    .two-col { grid-template-columns: 1fr; }
+    .join-card.wide { grid-column: auto; }
+  }
+</style>
+
+<div class="page-header">
+  <h2>SQL JOIN — přehled typů</h2>
+  <p class="page-subtitle">Oracle DB / ANSI SQL &nbsp;·&nbsp; příklady: account &amp; client</p>
+</div>
+
+<p class="join-section-title">Základní typy</p>
+<div class="join-grid">
+
+  <div class="join-card">
+    <div class="join-card-header">
+      <span class="join-card-title">INNER JOIN</span>
+      <span class="join-tag">nejčastější</span>
+    </div>
+    <div class="venn">
+      <svg width="120" height="60" viewBox="0 0 120 60" overflow="visible">
+        <circle cx="42" cy="30" r="26" fill="hsla(287,44%,27%,0.08)" stroke="var(--purple-mid)" stroke-width="1.5"/>
+        <circle cx="78" cy="30" r="26" fill="hsla(38,70%,40%,0.08)" stroke="hsl(38,60%,55%)" stroke-width="1.5"/>
+        <clipPath id="ic1"><circle cx="42" cy="30" r="26"/></clipPath>
+        <circle cx="78" cy="30" r="26" fill="hsla(287,44%,40%,0.45)" clip-path="url(#ic1)"/>
+        <text x="20" y="34" font-size="9" fill="var(--text-light)" font-family="monospace">A</text>
+        <text x="92" y="34" font-size="9" fill="var(--text-light)" font-family="monospace">B</text>
+      </svg>
+    </div>
+    <p class="join-desc">Vrátí pouze záznamy se shodou v <strong>obou</strong> tabulkách. Řádky bez shody se zahodí.</p>
+    <div class="join-code"><span class="kw">FROM</span> <span class="tbl">A</span> <span class="kw">JOIN</span> <span class="tbl">B</span> <span class="kw">ON</span> <span class="con">A.id = B.id</span></div>
+    <div class="join-example-label">příklad</div>
+    <div class="join-example"><span class="kw">FROM</span> <span class="tbl">account</span> a
+<span class="kw">JOIN</span> <span class="tbl">client</span> c <span class="kw">ON</span> <span class="con">a.id = c.acc_id</span>
+<span class="cm">-- jen účty, které mají klienta</span></div>
+  </div>
+
+  <div class="join-card">
+    <div class="join-card-header">
+      <span class="join-card-title">LEFT JOIN</span>
+    </div>
+    <div class="venn">
+      <svg width="120" height="60" viewBox="0 0 120 60" overflow="visible">
+        <circle cx="42" cy="30" r="26" fill="hsla(287,44%,40%,0.45)" stroke="var(--purple-mid)" stroke-width="1.5"/>
+        <circle cx="78" cy="30" r="26" fill="hsla(38,70%,40%,0.08)" stroke="hsl(38,60%,55%)" stroke-width="1.5"/>
+        <clipPath id="ic2"><circle cx="42" cy="30" r="26"/></clipPath>
+        <circle cx="78" cy="30" r="26" fill="hsla(287,44%,50%,0.4)" clip-path="url(#ic2)"/>
+        <text x="20" y="34" font-size="9" fill="var(--text-dark)" font-family="monospace">A</text>
+        <text x="92" y="34" font-size="9" fill="var(--text-light)" font-family="monospace">B</text>
+      </svg>
+    </div>
+    <p class="join-desc">Všechny záznamy z <strong>levé tabulky (A)</strong>. Z pravé jen shoda — jinak NULL.</p>
+    <div class="join-code"><span class="kw">FROM</span> <span class="tbl">A</span> <span class="kw">LEFT JOIN</span> <span class="tbl">B</span> <span class="kw">ON</span> <span class="con">A.id = B.id</span></div>
+    <div class="join-example-label">příklad</div>
+    <div class="join-example"><span class="kw">FROM</span> <span class="tbl">account</span> a
+<span class="kw">LEFT JOIN</span> <span class="tbl">client</span> c <span class="kw">ON</span> <span class="con">a.id = c.acc_id</span>
+<span class="cm">-- všechny účty, i bez klienta (NULL)</span></div>
+  </div>
+
+  <div class="join-card">
+    <div class="join-card-header">
+      <span class="join-card-title">RIGHT JOIN</span>
+    </div>
+    <div class="venn">
+      <svg width="120" height="60" viewBox="0 0 120 60" overflow="visible">
+        <circle cx="42" cy="30" r="26" fill="hsla(287,44%,27%,0.08)" stroke="var(--purple-mid)" stroke-width="1.5"/>
+        <circle cx="78" cy="30" r="26" fill="hsla(38,70%,40%,0.45)" stroke="hsl(38,60%,55%)" stroke-width="1.5"/>
+        <clipPath id="ic3"><circle cx="78" cy="30" r="26"/></clipPath>
+        <circle cx="42" cy="30" r="26" fill="hsla(287,44%,50%,0.4)" clip-path="url(#ic3)"/>
+        <text x="20" y="34" font-size="9" fill="var(--text-light)" font-family="monospace">A</text>
+        <text x="92" y="34" font-size="9" fill="var(--text-dark)" font-family="monospace">B</text>
+      </svg>
+    </div>
+    <p class="join-desc">Všechny záznamy z <strong>pravé tabulky (B)</strong>. Z levé jen shoda — jinak NULL.</p>
+    <div class="join-code"><span class="kw">FROM</span> <span class="tbl">A</span> <span class="kw">RIGHT JOIN</span> <span class="tbl">B</span> <span class="kw">ON</span> <span class="con">A.id = B.id</span></div>
+    <div class="join-example-label">příklad</div>
+    <div class="join-example"><span class="kw">FROM</span> <span class="tbl">account</span> a
+<span class="kw">RIGHT JOIN</span> <span class="tbl">client</span> c <span class="kw">ON</span> <span class="con">a.id = c.acc_id</span>
+<span class="cm">-- všichni klienti, i bez účtu (NULL)</span></div>
+  </div>
+
+  <div class="join-card">
+    <div class="join-card-header">
+      <span class="join-card-title">FULL JOIN</span>
+      <span class="join-tag">= FULL OUTER JOIN</span>
+    </div>
+    <div class="venn">
+      <svg width="120" height="60" viewBox="0 0 120 60" overflow="visible">
+        <circle cx="42" cy="30" r="26" fill="hsla(287,44%,40%,0.4)" stroke="var(--purple-mid)" stroke-width="1.5"/>
+        <circle cx="78" cy="30" r="26" fill="hsla(38,70%,40%,0.4)" stroke="hsl(38,60%,55%)" stroke-width="1.5"/>
+        <clipPath id="ic4"><circle cx="42" cy="30" r="26"/></clipPath>
+        <circle cx="78" cy="30" r="26" fill="hsla(287,44%,50%,0.45)" clip-path="url(#ic4)"/>
+        <text x="20" y="34" font-size="9" fill="var(--text-dark)" font-family="monospace">A</text>
+        <text x="92" y="34" font-size="9" fill="var(--text-dark)" font-family="monospace">B</text>
+      </svg>
+    </div>
+    <p class="join-desc">Vše z obou tabulek. Kde chybí vazba, doplní NULL na příslušné straně.</p>
+    <div class="join-code"><span class="kw">FROM</span> <span class="tbl">A</span> <span class="kw">FULL JOIN</span> <span class="tbl">B</span> <span class="kw">ON</span> <span class="con">A.id = B.id</span></div>
+    <div class="join-example-label">příklad</div>
+    <div class="join-example"><span class="kw">FROM</span> <span class="tbl">account</span> a
+<span class="kw">FULL JOIN</span> <span class="tbl">client</span> c <span class="kw">ON</span> <span class="con">a.id = c.acc_id</span>
+<span class="cm">-- vše: účty bez klienta + klienti bez účtu</span></div>
+  </div>
+
+</div>
+
+<p class="join-section-title">Left ↔ Right — ekvivalence</p>
+<div class="join-grid">
+  <div class="join-card wide">
+    <p class="join-desc" style="margin-bottom:1rem">RIGHT JOIN lze vždy přepsat jako LEFT JOIN — stačí prohodit pořadí tabulek. V praxi se RIGHT JOIN skoro nepoužívá.</p>
+    <div class="two-col">
+      <div>
+        <div class="join-example-label">RIGHT JOIN</div>
+        <div class="join-example"><span class="kw">FROM</span> <span class="tbl">account</span> a
+<span class="kw">RIGHT JOIN</span> <span class="tbl">client</span> c
+  <span class="kw">ON</span> <span class="con">a.id = c.acc_id</span>
+<span class="cm">-- všichni klienti, i bez účtu</span></div>
+      </div>
+      <div>
+        <div class="join-example-label">ekvivalentní LEFT JOIN</div>
+        <div class="join-example"><span class="kw">FROM</span> <span class="tbl">client</span> c
+<span class="kw">LEFT JOIN</span> <span class="tbl">account</span> a
+  <span class="kw">ON</span> <span class="con">a.id = c.acc_id</span>
+<span class="cm">-- stejný výsledek</span></div>
+      </div>
+    </div>
+    <p class="join-note">Slovo <strong>OUTER</strong> je volitelné: <code>LEFT OUTER JOIN</code> = <code>LEFT JOIN</code> &nbsp;·&nbsp; <code>FULL OUTER JOIN</code> = <code>FULL JOIN</code></p>
+  </div>
+</div>
+
+<p class="join-section-title">Ostatní</p>
+<div class="join-grid">
+
+  <div class="join-card">
+    <div class="join-card-header">
+      <span class="join-card-title">CROSS JOIN</span>
+      <span class="join-tag warn">pozor — objem dat</span>
+    </div>
+    <div class="venn">
+      <svg width="120" height="60" viewBox="0 0 120 60" overflow="visible">
+        <rect x="10" y="10" width="45" height="40" rx="4" fill="hsla(287,44%,27%,0.12)" stroke="var(--purple-mid)" stroke-width="1.5"/>
+        <rect x="65" y="10" width="45" height="40" rx="4" fill="hsla(38,70%,40%,0.12)" stroke="hsl(38,60%,55%)" stroke-width="1.5"/>
+        <text x="25" y="34" font-size="9" fill="var(--text-light)" font-family="monospace">A</text>
+        <text x="81" y="34" font-size="9" fill="var(--text-light)" font-family="monospace">B</text>
+        <text x="52" y="36" font-size="14" fill="hsl(38,60%,45%)">×</text>
+      </svg>
+    </div>
+    <p class="join-desc">Kartézský součin — každý řádek A s každým řádkem B. Bez ON podmínky. Výsledek: <strong>n × m řádků</strong>.</p>
+    <div class="join-code"><span class="kw">FROM</span> <span class="tbl">A</span> <span class="kw">CROSS JOIN</span> <span class="tbl">B</span></div>
+  </div>
+
+  <div class="join-card">
+    <div class="join-card-header">
+      <span class="join-card-title">SELF JOIN</span>
+      <span class="join-tag">aliasy nutné</span>
+    </div>
+    <div class="venn">
+      <svg width="120" height="60" viewBox="0 0 120 60" overflow="visible">
+        <circle cx="60" cy="30" r="26" fill="hsla(287,44%,27%,0.12)" stroke="var(--purple-mid)" stroke-width="1.5"/>
+        <circle cx="60" cy="30" r="14" fill="hsla(287,44%,40%,0.35)" stroke="var(--purple-mid)" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <text x="52" y="34" font-size="9" fill="var(--text-light)" font-family="monospace">A↺</text>
+      </svg>
+    </div>
+    <p class="join-desc">Tabulka joinována sama se sebou. Typicky pro hierarchie (nadřízený–podřízený).</p>
+    <div class="join-code"><span class="kw">FROM</span> <span class="tbl">emp</span> e
+<span class="kw">JOIN</span> <span class="tbl">emp</span> m <span class="kw">ON</span> <span class="con">e.mgr_id = m.id</span></div>
+  </div>
+
+  <div class="join-card">
+    <div class="join-card-header">
+      <span class="join-card-title">UNION / UNION ALL</span>
+      <span class="join-tag warn">není JOIN</span>
+    </div>
+    <div class="venn">
+      <svg width="120" height="60" viewBox="0 0 120 60" overflow="visible">
+        <rect x="20" y="8" width="80" height="18" rx="3" fill="hsla(287,44%,27%,0.15)" stroke="var(--purple-mid)" stroke-width="1.5"/>
+        <rect x="20" y="34" width="80" height="18" rx="3" fill="hsla(38,70%,40%,0.15)" stroke="hsl(38,60%,55%)" stroke-width="1.5"/>
+        <text x="46" y="21" font-size="8" fill="var(--text-light)" font-family="monospace">SELECT A</text>
+        <text x="46" y="47" font-size="8" fill="var(--text-light)" font-family="monospace">SELECT B</text>
+      </svg>
+    </div>
+    <p class="join-desc">Spojuje výsledky dvou SELECT dotazů <strong>vertikálně</strong> (přidává řádky, ne sloupce). Musí mít stejný počet a typ sloupců. <strong>UNION ALL</strong> ponechá duplicity.</p>
+    <div class="join-code"><span class="kw">SELECT</span> id, name <span class="kw">FROM</span> <span class="tbl">account</span>
+<span class="kw">UNION</span>
+<span class="kw">SELECT</span> id, name <span class="kw">FROM</span> <span class="tbl">archive_account</span></div>
+  </div>
+
+</div>
+{% endblock %}
