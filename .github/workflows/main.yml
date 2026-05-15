@@ -13,7 +13,7 @@ jobs:
         PYTHON_VERSION: 3.13.7
       steps:
       - uses: actions/checkout@v4
-      - uses: webfactory/ssh-agent@v0.9.0
+      - uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.ROSTI_DEPLOY_SSH_KEY }}
       - name: Setup hostkey
@@ -63,7 +63,7 @@ jobs:
           rm rosti.nginx.conf
       - name: Copy code
         run: |
-          rsync -ae "ssh -o UserKnownHostsFile=./known_hosts -p $PORT" --delete-after --exclude=.git --exclude=venv --exclude=__pycache__ --exclude=.env ./ $USER@$HOST:/srv/app/dd-tools/
+          rsync -ae "ssh -o UserKnownHostsFile=./known_hosts -p $PORT" --delete-after --exclude=.git --exclude=venv --exclude=__pycache__ --exclude=.env --exclude=tests ./ $USER@$HOST:/srv/app/dd-tools/
       - name: Install dependencies on server
         run: |
           ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST "cd /srv/app/dd-tools && /srv/venv/bin/pip install -r requirements.txt"

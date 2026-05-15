@@ -31,3 +31,6 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# Claude's cache and logs
+.claude/
