@@ -1,7 +1,8 @@
 # TODO — DD Tools
 
 ## Bezpečnost
-- [ ] **Autentizace / login** — projekt běží veřejně na webu, přidat jednoduchý login
+- [x] **Rate limiting** — 60 requestů za minutu na IP (Flask-Limiter)
+- [x] **robots.txt** — zakázána indexace (`Disallow: /`)
 - [ ] **Sanitizace vstupů** — důsledně validovat vstupy ve všech nástrojích v `libs/`
 
 ## Testování
