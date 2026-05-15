@@ -1,49 +1,74 @@
 {% extends "base.html" %}
 
+{% macro encoding_controls(fd={}) %}
+<div class="form-group">
+    <label class="form-label">Zdrojové kódování</label>
+    <select name="source_encoding" class="form-control" required>
+        <option value="">-- Vyberte kódování --</option>
+        {% for code, name in encodings %}
+        <option value="{{ code }}" {% if fd.get('source_encoding') == code %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-group">
+    <label class="form-label">Cílové kódování</label>
+    <select name="target_encoding" class="form-control" required>
+        <option value="">-- Vyberte kódování --</option>
+        {% for code, name in encodings %}
+        <option value="{{ code }}" {% if fd.get('target_encoding') == code %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-group">
+    <label class="form-label">Chování při nepřevoditelných znacích</label>
+    <select name="error_mode" class="form-control">
+        {% for mode, description in error_modes %}
+        <option value="{{ mode }}" {% if fd.get('error_mode', 'replace') == mode %}selected{% endif %}>{{ description }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% endmacro %}
+
 {% block title %}Převod kódování - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h2>Převod kódování</h2>
-    <p>Převod textových souborů mezi různými kódováními</p>
+    <p>Převod textu nebo souborů mezi různými kódováními</p>
 </div>
 
 <div class="card">
-    <h3>Nahrát soubor a převést</h3>
-    
+    <h3>Textový převod</h3>
+
+    <form method="POST" action="{{ url_for('encoding_converter_page') }}">
+        {{ encoding_controls(form_data) }}
+
+        <div class="form-group">
+            <label class="form-label">Vstupní text</label>
+            <textarea name="text_input" class="form-control" rows="8">{{ form_data.get('text_input', '') }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Převést</button>
+    </form>
+
+    {% if result %}
+        {% if result.error %}
+        <div class="alert alert-error" style="margin-top: 16px;">{{ result.error }}</div>
+        {% else %}
+        <pre class="result-pre">{{ result.output }}</pre>
+        {% endif %}
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Převod souboru</h3>
+
     <form action="{{ url_for('encoding_convert') }}" method="POST" enctype="multipart/form-data">
+        {{ encoding_controls() }}
+
         <div class="form-group">
             <label for="file" class="form-label">Vyberte soubor:</label>
             <input type="file" id="file" name="file" class="form-control" accept=".txt,.csv,.log" required>
-        </div>
-
-        <div class="form-group">
-            <label for="source_encoding" class="form-label">Zdrojové kódování:</label>
-            <select id="source_encoding" name="source_encoding" class="form-control" required>
-                <option value="">-- Vyberte kódování --</option>
-                {% for code, name in encodings %}
-                <option value="{{ code }}">{{ name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="target_encoding" class="form-label">Cílové kódování:</label>
-            <select id="target_encoding" name="target_encoding" class="form-control" required>
-                <option value="">-- Vyberte kódování --</option>
-                {% for code, name in encodings %}
-                <option value="{{ code }}">{{ name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="error_mode" class="form-label">Chování při nepřevoditelných znacích:</label>
-            <select id="error_mode" name="error_mode" class="form-control">
-                {% for mode, description in error_modes %}
-                <option value="{{ mode }}" {% if mode == 'replace' %}selected{% endif %}>{{ description }}</option>
-                {% endfor %}
-            </select>
         </div>
 
         <button type="submit" class="btn btn-primary">Převést a stáhnout</button>
@@ -58,7 +83,7 @@
         <li>{{ name }} ({{ code }})</li>
         {% endfor %}
     </ul>
-    
+
     <p style="margin-top: 20px;"><strong>Poznámky:</strong></p>
     <ul style="margin-left: 20px; margin-top: 10px; color: var(--text-light);">
         <li>Výstupní soubor bude mít název ve formátu: <code>původní_název_cílové-kódování.txt</code></li>
