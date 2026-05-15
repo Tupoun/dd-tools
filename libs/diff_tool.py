@@ -4,6 +4,8 @@ Knihovna pro porovnání dvou textů (diff)
 
 import difflib
 
+MAX_INPUT = 500_000
+
 
 def compare(text1, text2):
     """
@@ -12,6 +14,8 @@ def compare(text1, text2):
     Returns:
         tuple: (list of dicts, identical: bool)
     """
+    if len(text1) > MAX_INPUT or len(text2) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 500 KB na text)'
     lines1 = text1.splitlines()
     lines2 = text2.splitlines()
 

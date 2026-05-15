@@ -5,8 +5,12 @@ Knihovna pro převod Unicode escape sekvencí na čísla a zpět
 import re
 import struct
 
+MAX_INPUT = 10_000
+
 
 def escapes_to_number(text, divisor=1, byteorder='big'):
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 10 KB)'
     """
     Převede řetězec s \\uXXXX escape sekvencemi na číslo.
 

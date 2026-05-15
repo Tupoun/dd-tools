@@ -4,6 +4,8 @@ Knihovna pro parsování a generování cron výrazů
 
 from datetime import datetime, timedelta
 
+MAX_INPUT = 200
+
 
 MONTH_NAMES = {
     1: 'leden', 2: 'únor', 3: 'březen', 4: 'duben',
@@ -84,6 +86,8 @@ def _describe_field(field, names=None):
 
 def describe(expression):
     """Vrátí lidsky čitelný popis cron výrazu v češtině."""
+    if len(expression) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 200 znaků)'
     parts = expression.strip().split()
     if len(parts) != 5:
         return None, 'Cron výraz musí mít přesně 5 polí: minuta hodina den měsíc den_týdne'
@@ -134,6 +138,8 @@ def describe(expression):
 
 def next_runs(expression, count=5):
     """Vrátí seznam příštích N spuštění cron úlohy."""
+    if len(expression) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 200 znaků)'
     parts = expression.strip().split()
     if len(parts) != 5:
         return None, 'Cron výraz musí mít přesně 5 polí'
