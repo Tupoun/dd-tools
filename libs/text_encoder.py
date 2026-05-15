@@ -5,6 +5,8 @@ Knihovna pro enkódování a dekódování textu
 import base64
 import urllib.parse
 
+MAX_INPUT = 1_000_000
+
 
 ALGORITHMS = [
     ('base64',    'Base64'),
@@ -16,6 +18,8 @@ ALGORITHMS = [
 
 
 def encode(text, algorithm):
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 1 MB)'
     try:
         b = text.encode('utf-8')
         if algorithm == 'base64':
@@ -34,6 +38,8 @@ def encode(text, algorithm):
 
 
 def decode(text, algorithm):
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 1 MB)'
     try:
         t = text.strip()
         if algorithm == 'base64':

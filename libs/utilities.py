@@ -8,6 +8,8 @@ import re
 from datetime import date, datetime, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+MAX_INPUT = 100_000
+
 
 # ── Unix timestamp ────────────────────────────────────────────────────────────
 
@@ -72,6 +74,8 @@ def datetime_to_timestamp(dt_str, unit='s', timezone_name='UTC'):
 
 def unescape_json_string(text):
     """Odstraní JSON string escaping: \\n → newline, \\" → ", atd."""
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 100 KB)'
     try:
         stripped = text.strip()
         if not (stripped.startswith('"') and stripped.endswith('"')):
@@ -83,6 +87,8 @@ def unescape_json_string(text):
 
 def unescape_unicode(text):
     """Převede \\uXXXX sekvence na skutečné znaky: \\u003c → <"""
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 100 KB)'
     try:
         result = re.sub(
             r'\\u([0-9a-fA-F]{4})',
@@ -117,6 +123,8 @@ def days_since_epoch(date_str=None):
 
 def encode_html_entities(text):
     """Escapuje HTML znaky: < → &lt;, & → &amp;, atd."""
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 100 KB)'
     try:
         return html.escape(text, quote=True), None
     except Exception as e:
@@ -125,6 +133,8 @@ def encode_html_entities(text):
 
 def decode_html_entities(text):
     """Odescapuje HTML entity: &lt; → <, &amp; → &, atd."""
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 100 KB)'
     try:
         return html.unescape(text), None
     except Exception as e:

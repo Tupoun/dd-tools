@@ -3,10 +3,14 @@ Knihovna pro formátování JSON a XML
 """
 
 import json
-import xml.dom.minidom
+from defusedxml.minidom import parseString as safe_parseString
+
+MAX_INPUT = 1_000_000
 
 
 def format_json(text, sort_keys=False):
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 1 MB)'
     try:
         data = json.loads(text)
         return json.dumps(data, indent=2, ensure_ascii=False, sort_keys=sort_keys), None
@@ -15,6 +19,8 @@ def format_json(text, sort_keys=False):
 
 
 def minify_json(text):
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 1 MB)'
     try:
         data = json.loads(text)
         return json.dumps(data, separators=(',', ':'), ensure_ascii=False), None
@@ -23,10 +29,11 @@ def minify_json(text):
 
 
 def format_xml(text):
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 1 MB)'
     try:
-        dom = xml.dom.minidom.parseString(text.strip().encode('utf-8'))
+        dom = safe_parseString(text.strip().encode('utf-8'))
         pretty = dom.toprettyxml(indent='  ')
-        # Odstraň prázdné řádky, které minidom někdy přidává
         lines = [line for line in pretty.splitlines() if line.strip()]
         return '\n'.join(lines), None
     except Exception as e:

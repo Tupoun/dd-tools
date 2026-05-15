@@ -6,8 +6,12 @@ import csv
 import json
 import io
 
+MAX_INPUT = 1_000_000
+
 
 def csv_to_json(text, delimiter=','):
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 1 MB)'
     try:
         reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
         rows = list(reader)
@@ -19,6 +23,8 @@ def csv_to_json(text, delimiter=','):
 
 
 def json_to_csv(text, delimiter=','):
+    if len(text) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 1 MB)'
     try:
         data = json.loads(text)
         if not isinstance(data, list):

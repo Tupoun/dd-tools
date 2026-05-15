@@ -30,6 +30,7 @@ if not app.secret_key:
 # Konfigurace
 UPLOAD_FOLDER = '/tmp/dd-tools-uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5 MB
 
 # Registrace nástrojů pro menu
 TOOLS = [
@@ -455,7 +456,10 @@ def diff_page():
         text2 = request.form.get('text2', '')
         form_data = {'text1': text1, 'text2': text2}
         lines, identical = diff_tool.compare(text1, text2)
-        result = {'lines': lines, 'identical': identical}
+        if isinstance(identical, str):
+            result = {'error': identical}
+        else:
+            result = {'lines': lines, 'identical': identical}
 
     return render_template('diff.html', tools=TOOLS, result=result, form_data=form_data)
 

@@ -6,8 +6,12 @@ import base64
 import json
 from datetime import datetime
 
+MAX_INPUT = 10_000
+
 
 def decode(token):
+    if len(token) > MAX_INPUT:
+        return None, 'Vstup je příliš velký (max 10 KB)'
     parts = token.strip().split('.')
     if len(parts) != 3:
         return None, 'Neplatný JWT token — musí mít 3 části oddělené tečkou.'
