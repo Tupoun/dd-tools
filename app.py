@@ -2,20 +2,30 @@
 DD Tools - Flask Web Application
 """
 
-from flask import Flask, render_template, request, send_file, flash, redirect, url_for
+from flask import Flask, render_template, request, send_file, flash, redirect, url_for, session
 from werkzeug.utils import secure_filename
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from datetime import timedelta
 from dotenv import load_dotenv
 import os
 import io
 
 from libs import encoding_converter, bytes_converter, text_encoder, jwt_decoder, hash_generator, cron_parser, formatter, utilities, diff_tool, csv_json, uuid_generator, yaml_json, generator
+from libs.auth import get_user, verify_credentials
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+
+login_manager = LoginManager(app)
+login_manager.login_view = 'login_page'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return get_user(user_id)
 
 limiter = Limiter(
     get_remote_address,
@@ -125,6 +135,42 @@ TOOLS = [
 @limiter.exempt
 def robots_txt():
     return app.response_class("User-agent: *\nDisallow: /\n", mimetype='text/plain')
+
+
+@app.before_request
+def set_session_timeout():
+    session.permanent = True
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        remember = request.form.get('remember') == '1'
+
+        user = verify_credentials(username, password)
+        if user:
+            duration = timedelta(days=30) if remember else timedelta(hours=8)
+            app.permanent_session_lifetime = duration
+            login_user(user, remember=remember, duration=duration)
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('index'))
+        else:
+            error = 'Nesprávné přihlašovací údaje.'
+
+    return render_template('login.html', error=error, tools=TOOLS)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 
 @app.route('/')
