@@ -43,92 +43,49 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5 MB
 
 # Registrace nástrojů pro menu
-TOOLS = [
+TOOL_GROUPS = [
     {
-        'id': 'encoding',
-        'name': 'Převod kódování',
-        'description': 'Převod textových souborů mezi různými kódováními',
-        'route': 'encoding_converter_page'
+        'id': 'generators',
+        'name': 'Generátory',
+        'tools': [
+            {'id': 'uuid',      'name': 'UUID',           'description': 'Generátor UUID v1 a v4',                  'route': 'uuid_page'},
+            {'id': 'hash',      'name': 'Hash',            'description': 'MD5, SHA-1, SHA-256, SHA-512',            'route': 'hash_generator_page'},
+            {'id': 'generator', 'name': 'Generátor dat',   'description': 'Čísla účtů dle ČNB, rodná čísla',        'route': 'generator_page'},
+        ]
     },
     {
-        'id': 'bytes',
-        'name': 'Převod bajtů',
-        'description': 'Převod Unicode escape sekvencí na čísla a zpět',
-        'route': 'bytes_converter_page'
+        'id': 'conversion',
+        'name': 'Konverze',
+        'tools': [
+            {'id': 'encoder',   'name': 'Encoder',         'description': 'Base64, URL encode, Hex a další převody', 'route': 'text_encoder_page'},
+            {'id': 'encoding',  'name': 'Kódování',        'description': 'Převod textových souborů mezi kódováními','route': 'encoding_converter_page'},
+            {'id': 'bytes',     'name': 'Bytes',           'description': 'Převod Unicode escape sekvencí',          'route': 'bytes_converter_page'},
+            {'id': 'csv_json',  'name': 'CSV ↔ JSON',      'description': 'Konverze mezi CSV a JSON',               'route': 'csv_json_page'},
+            {'id': 'yaml_json', 'name': 'YAML ↔ JSON',     'description': 'Konverze mezi YAML a JSON',              'route': 'yaml_json_page'},
+        ]
     },
     {
-        'id': 'encoder',
-        'name': 'Encoder',
-        'description': 'Base64, URL encode, Hex a další převody',
-        'route': 'text_encoder_page'
+        'id': 'parsers',
+        'name': 'Parsery',
+        'tools': [
+            {'id': 'jwt',       'name': 'JWT Decoder',     'description': 'Dekódování JWT tokenů',                  'route': 'jwt_decoder_page'},
+            {'id': 'formatter', 'name': 'Formatter',       'description': 'Formátování JSON a XML',                 'route': 'formatter_page'},
+            {'id': 'cron',      'name': 'Cron',            'description': 'Parser a generátor cron výrazů',         'route': 'cron_page'},
+            {'id': 'diff',      'name': 'Diff',            'description': 'Porovnání dvou textů',                   'route': 'diff_page'},
+        ]
     },
     {
-        'id': 'jwt',
-        'name': 'JWT Decoder',
-        'description': 'Dekódování JWT tokenů',
-        'route': 'jwt_decoder_page'
+        'id': 'reference',
+        'name': 'Referenční',
+        'tools': [
+            {'id': 'utilities', 'name': 'Utilities',       'description': 'Unix timestamp, JSON unescape a další',  'route': 'utilities_page'},
+            {'id': 'sql_joins', 'name': 'SQL JOINy',       'description': 'Přehled typů SQL JOIN s příklady',       'route': 'sql_joins_page'},
+        ]
     },
-    {
-        'id': 'hash',
-        'name': 'Hash generátor',
-        'description': 'MD5, SHA-1, SHA-256, SHA-512',
-        'route': 'hash_generator_page'
-    },
-    {
-        'id': 'cron',
-        'name': 'Cron',
-        'description': 'Parser a generátor cron výrazů',
-        'route': 'cron_page'
-    },
-    {
-        'id': 'formatter',
-        'name': 'Formatter',
-        'description': 'Formátování JSON a XML',
-        'route': 'formatter_page'
-    },
-    {
-        'id': 'utilities',
-        'name': 'Utilities',
-        'description': 'Unix timestamp, JSON unescape, Unicode unescape',
-        'route': 'utilities_page'
-    },
-    {
-        'id': 'diff',
-        'name': 'Diff',
-        'description': 'Porovnání dvou textů',
-        'route': 'diff_page'
-    },
-    {
-        'id': 'uuid',
-        'name': 'UUID',
-        'description': 'Generátor UUID v1 a v4',
-        'route': 'uuid_page'
-    },
-    {
-        'id': 'csv_json',
-        'name': 'CSV ↔ JSON',
-        'description': 'Konverze mezi CSV a JSON',
-        'route': 'csv_json_page'
-    },
-    {
-        'id': 'yaml_json',
-        'name': 'YAML ↔ JSON',
-        'description': 'Konverze mezi YAML a JSON',
-        'route': 'yaml_json_page'
-    },
-    {
-        'id': 'generator',
-        'name': 'Generátor',
-        'description': 'Čísla účtů dle ČNB, rodná čísla',
-        'route': 'generator_page'
-    },
-    {
-        'id': 'sql_joins',
-        'name': 'SQL JOINy',
-        'description': 'Přehled typů SQL JOIN s příklady',
-        'route': 'sql_joins_page'
-    }
 ]
+
+# Zpětná kompatibilita — flat list
+TOOLS = [tool for group in TOOL_GROUPS for tool in group['tools']]
 
 
 @app.route('/robots.txt')
@@ -670,9 +627,12 @@ def sql_joins_page():
 
 
 @app.context_processor
-def inject_app_name():
-    """Vloží název aplikace do všech šablon"""
-    return {'app_name': 'DD Tools'}
+def inject_globals():
+    return {
+        'app_name': 'DD Tools',
+        'tool_groups': TOOL_GROUPS,
+        'tools': TOOLS,
+    }
 
 
 if __name__ == '__main__':

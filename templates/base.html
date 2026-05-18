@@ -25,18 +25,32 @@
             <nav>
                 <ul class="nav-menu">
                     <li class="nav-item">
-                        <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                        <a href="{{ url_for('index') }}"
+                           class="nav-link nav-home {% if request.endpoint == 'index' %}active{% endif %}">
                             Domů
                         </a>
                     </li>
-                    {% for tool in tools %}
-                    <li class="nav-item">
-                        <a href="{{ url_for(tool.route) }}" class="nav-link {% if request.endpoint == tool.route %}active{% endif %}">
-                            {{ tool.name }}
-                        </a>
-                    </li>
-                    {% endfor %}
                 </ul>
+
+                {% for group in tool_groups %}
+                <div class="nav-group" data-group-id="{{ group.id }}">
+                    <button class="nav-group-header" type="button"
+                            onclick="toggleGroup('{{ group.id }}')">
+                        <span>{{ group.name }}</span>
+                        <span class="nav-chevron">▶</span>
+                    </button>
+                    <ul class="nav-group-items" id="group-{{ group.id }}">
+                        {% for tool in group.tools %}
+                        <li class="nav-item">
+                            <a href="{{ url_for(tool.route) }}"
+                               class="nav-link nav-tool {% if request.endpoint == tool.route %}active{% endif %}">
+                                {{ tool.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
             </nav>
         </aside>
 
@@ -90,6 +104,52 @@ document.addEventListener('DOMContentLoaded', function () {
         wrapper.appendChild(pre);
         wrapper.appendChild(btn);
     });
+});
+
+// Sidebar skupiny — collapse/expand s localStorage
+function toggleGroup(groupId) {
+    var items = document.getElementById('group-' + groupId);
+    var header = items.previousElementSibling;
+    var isOpen = !items.classList.contains('collapsed');
+
+    if (isOpen) {
+        items.classList.add('collapsed');
+        header.classList.remove('open');
+    } else {
+        items.classList.remove('collapsed');
+        header.classList.add('open');
+    }
+
+    var states = JSON.parse(localStorage.getItem('navGroupStates') || '{}');
+    states[groupId] = !isOpen;
+    localStorage.setItem('navGroupStates', JSON.stringify(states));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var states = JSON.parse(localStorage.getItem('navGroupStates') || '{}');
+
+    document.querySelectorAll('.nav-group').forEach(function(group) {
+        var groupId = group.dataset.groupId;
+        var items = document.getElementById('group-' + groupId);
+        var header = items.previousElementSibling;
+
+        var isOpen = states.hasOwnProperty(groupId) ? states[groupId] : false;
+
+        if (items.querySelector('.nav-tool.active')) {
+            isOpen = true;
+            states[groupId] = true;
+        }
+
+        if (isOpen) {
+            items.classList.remove('collapsed');
+            header.classList.add('open');
+        } else {
+            items.classList.add('collapsed');
+            header.classList.remove('open');
+        }
+    });
+
+    localStorage.setItem('navGroupStates', JSON.stringify(states));
 });
 
 // Dark mode toggle

@@ -3,25 +3,138 @@
 {% block title %}{{ app_name }} - Domů{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>Vítejte v {{ app_name }}</h2>
-    <p>Vyberte nástroj z menu nebo klikněte na kartu níže</p>
+<div class="home-container">
+    <div class="home-logo-bg"></div>
+    <div class="home-quote">
+        <blockquote id="home-quote-text"></blockquote>
+        <cite id="home-quote-cite"></cite>
+    </div>
 </div>
 
-<div class="tools-grid">
-    {% for tool in tools %}
-    <a href="{{ url_for(tool.route) }}" class="tool-card">
-        <h3>{{ tool.name }}</h3>
-        <p>{{ tool.description }}</p>
-    </a>
-    {% endfor %}
-</div>
+<script>
+(function() {
+    var quotes = [
+        {
+            text: "Kdo hledá, ten nenajde. Kdo nenajde, ten nekliká.\nKdo nekliká, ten nezpůsobí chybu v produkci.",
+            cite: "— Lao-c' (pravděpodobně)"
+        },
+        {
+            text: "Dal jsem lidem oheň. Kdybych věděl co s ním udělají v serverovně,\nnechal bych je mrznout.",
+            cite: "— Prométheus (v rozhovoru se Zeus, cca 700 př.n.l.)"
+        },
+        {
+            text: "Čin bez očekávání výsledku je nejvyšší moudrost.\nProto nikdy nedeploy v pátek odpoledne.",
+            cite: "— Bhagavadgíta, kapitola 3, verš 19 (volný překlad pro Tupouny)"
+        },
+        {
+            text: "Každý dostatečně pokročilý bug je k nerozeznání od feature.",
+            cite: "— Arthur C. Clarke (upraveno pro realitu)"
+        },
+        {
+            text: "Myslím, tedy jsem. Neklikám, tedy server běží.",
+            cite: "— Descartes (pozdní tvorba)"
+        },
+        {
+            text: "Vesmír expanduje. Databáze také. Nikdo neví proč.",
+            cite: "— Edwin Hubble (soukromá korespondence, 1929)"
+        },
+        {
+            text: "Skutečný Tupoun nepotřebuje dokumentaci.\nDokumentace potřebuje jeho.",
+            cite: "— Anonymní senior developer (3:47 ráno)"
+        },
+    ];
 
-{% if tools|length == 0 %}
-<div class="card">
-    <p style="text-align: center; color: var(--text-light);">
-        Zatím nejsou k dispozici žádné nástroje.
-    </p>
-</div>
-{% endif %}
+    var day = new Date().getDay();
+    var q = quotes[day % 7];
+
+    var textEl = document.getElementById('home-quote-text');
+    var citeEl = document.getElementById('home-quote-cite');
+    textEl.innerHTML = q.text.replace(/\n/g, '<br>');
+    citeEl.textContent = q.cite;
+
+    // ── Easter egg: DDTools.tupoun() v konzoli ────────────────────────────
+    window.DDTools = {
+        tupoun: function() {
+            console.log(
+                '%c"Nikdy se nenarodil, nikdy nezemře. Věčný, pradávný, nezničitelný —\n' +
+                'nezabíjí ani není zabit, když je tělo zničeno."\n\n' +
+                '— Bhagavadgíta, 2:20',
+                'font-style: italic; font-size: 14px; color: #9B1B30;'
+            );
+            return "Našel jsi to. Jsi tedy Mega Tupý Tupoun.";
+        }
+    };
+
+    // ── Astronomická podmínka: druhá středa po úplňku v sudém měsíci před Velikonocemi ──
+    function getEaster(year) {
+        var a = year % 19;
+        var b = Math.floor(year / 100);
+        var c = year % 100;
+        var d = Math.floor(b / 4);
+        var e = b % 4;
+        var f = Math.floor((b + 8) / 25);
+        var g = Math.floor((b - f + 1) / 3);
+        var h = (19 * a + b - d - g + 15) % 30;
+        var i = Math.floor(c / 4);
+        var k = c % 4;
+        var l = (32 + 2 * e + 2 * i - h - k) % 7;
+        var m = Math.floor((a + 11 * h + 22 * l) / 451);
+        var month = Math.floor((h + l - 7 * m + 114) / 31);
+        var day = ((h + l - 7 * m + 114) % 31) + 1;
+        return new Date(year, month - 1, day);
+    }
+
+    function getFullMoons(year) {
+        var moons = [];
+        var knownFullMoon = new Date(2000, 0, 6, 18, 14, 0);
+        var lunarCycle = 29.530588853 * 24 * 60 * 60 * 1000;
+        var startOfYear = new Date(year, 0, 1);
+        var endOfYear = new Date(year, 11, 31);
+        var n = Math.ceil((startOfYear - knownFullMoon) / lunarCycle);
+        for (var i = n; ; i++) {
+            var moon = new Date(knownFullMoon.getTime() + i * lunarCycle);
+            if (moon > endOfYear) break;
+            if (moon >= startOfYear) moons.push(moon);
+        }
+        return moons;
+    }
+
+    function checkAstronomicalCondition(date) {
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var easter = getEaster(year);
+
+        if (month % 2 !== 0) return false;
+        if (date >= easter) return false;
+
+        var moons = getFullMoons(year).filter(function(m) {
+            return m.getMonth() + 1 === month;
+        });
+        if (moons.length === 0) return false;
+
+        var firstMoon = moons[0];
+        var wednesdayCount = 0;
+        var d = new Date(firstMoon);
+        d.setDate(d.getDate() + 1);
+        while (wednesdayCount < 2) {
+            if (d.getDay() === 3) {
+                wednesdayCount++;
+                if (wednesdayCount === 2) {
+                    return date.getFullYear() === d.getFullYear() &&
+                           date.getMonth() === d.getMonth() &&
+                           date.getDate() === d.getDate();
+                }
+            }
+            d.setDate(d.getDate() + 1);
+        }
+        return false;
+    }
+
+    if (checkAstronomicalCondition(new Date())) {
+        textEl.innerHTML = "Proto bojuj, ó Ardžuno.";
+        citeEl.textContent = "— Bhagavadgíta, 2:18 (Krišna, po dvaceti verších filozofického zdůvodnění)";
+    }
+
+})();
+</script>
 {% endblock %}
