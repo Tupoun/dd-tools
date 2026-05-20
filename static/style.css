@@ -38,6 +38,10 @@
     --shadow-primary-lg:  var(--shadow-lg);
     --overlay-white-sm:   rgba(255, 255, 255, 0.10);
     --color-white:        #ffffff;
+
+    --logo-src:            url('/static/logo.png');
+    --logo-bg-opacity:     0.08;
+    --logo-bg-blend:       normal;
 }
 
 /* ── Reset ──────────────────────────────────────────────────────────────── */
@@ -54,13 +58,16 @@ body {
     color: var(--text-dark);
     background-color: var(--bg-light);
     line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 /* ── Layout ─────────────────────────────────────────────────────────────── */
 
 .container {
     display: flex;
-    min-height: 100vh;
+    flex: 1;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
@@ -77,7 +84,7 @@ body {
 }
 
 .sidebar-header {
-    padding: 28px 20px 24px;
+    padding: 6px 20px 24px;
     border-bottom: 1px solid var(--overlay-white-sm);
 }
 
@@ -122,6 +129,140 @@ body {
     background-color: rgba(255, 255, 255, 0.18);
     color: #ffffff;
     font-weight: 600;
+}
+
+/* ── Sidebar skupiny ─────────────────────────────────────────────────────── */
+
+.nav-home {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.nav-group {
+    margin-bottom: 2px;
+}
+
+.nav-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 7px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.40);
+    transition: background-color 0.18s ease, color 0.18s ease;
+    text-align: left;
+}
+
+.nav-group-header:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.nav-group-header.open {
+    color: rgba(255, 255, 255, 0.70);
+}
+
+.nav-chevron {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.25);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.nav-group-header.open .nav-chevron {
+    transform: rotate(90deg);
+}
+
+.nav-group-items {
+    list-style: none;
+    padding: 2px 0 4px 0;
+    overflow: hidden;
+}
+
+.nav-group-items.collapsed {
+    display: none;
+}
+
+.nav-tool {
+    padding-left: 22px;
+    font-size: 13px;
+    position: relative;
+}
+
+.nav-tool::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.20);
+}
+
+.nav-tool.active::before {
+    background: var(--purple-pale);
+}
+
+/* ── Homepage ────────────────────────────────────────────────────────────── */
+
+.home-container {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.home-logo-bg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(500px, 80%);
+    aspect-ratio: 661 / 397;
+    background-image: var(--logo-src);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: var(--logo-bg-opacity);
+    mix-blend-mode: var(--logo-bg-blend);
+    pointer-events: none;
+}
+
+.home-quote {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 24px;
+    max-width: 480px;
+}
+
+.home-quote blockquote {
+    font-size: 16px;
+    font-style: italic;
+    color: var(--text-light);
+    line-height: 1.85;
+}
+
+.home-quote cite {
+    display: block;
+    margin-top: 14px;
+    font-size: 12px;
+    font-style: normal;
+    color: var(--text-light);
+    opacity: 0.6;
 }
 
 /* ── Top bar ─────────────────────────────────────────────────────────────── */
@@ -178,7 +319,6 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
     overflow: hidden;
 }
 
@@ -425,6 +565,10 @@ div:has(> pre.result-pre):hover .copy-btn {
         --shadow-lg:   0 8px 28px hsla(287, 44%, 5%, 0.65),
                        0 4px 8px  hsla(287, 44%, 5%, 0.35);
         --focus-ring:  0 0 0 3px  hsla(287, 44%, 60%, 0.30);
+
+        --logo-src:            url('/static/logo.png');
+        --logo-bg-opacity:     0.08;
+        --logo-bg-blend:       normal;
     }
 
     pre {
@@ -465,6 +609,10 @@ html.dark {
     --shadow-lg:   0 8px 28px hsla(287, 44%, 5%, 0.65),
                    0 4px 8px  hsla(287, 44%, 5%, 0.35);
     --focus-ring:  0 0 0 3px  hsla(287, 44%, 60%, 0.30);
+
+    --logo-src:            url('/static/logo.png');
+    --logo-bg-opacity:     0.08;
+    --logo-bg-blend:       normal;
 }
 
 html.dark pre {
