@@ -231,7 +231,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     width: min(500px, 80%);
-    aspect-ratio: 661 / 397;
+    aspect-ratio: 709 / 409;
     background-image: var(--logo-src);
     background-size: contain;
     background-repeat: no-repeat;
@@ -566,9 +566,6 @@ div:has(> pre.result-pre):hover .copy-btn {
                        0 4px 8px  hsla(287, 44%, 5%, 0.35);
         --focus-ring:  0 0 0 3px  hsla(287, 44%, 60%, 0.30);
 
-        --logo-src:            url('/static/logo.svg');
-        --logo-bg-opacity:     0.08;
-        --logo-bg-blend:       normal;
     }
 
     pre {
@@ -610,9 +607,6 @@ html.dark {
                    0 4px 8px  hsla(287, 44%, 5%, 0.35);
     --focus-ring:  0 0 0 3px  hsla(287, 44%, 60%, 0.30);
 
-    --logo-src:            url('/static/logo.svg');
-    --logo-bg-opacity:     0.08;
-    --logo-bg-blend:       normal;
 }
 
 html.dark pre {
