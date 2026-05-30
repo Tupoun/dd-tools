@@ -39,7 +39,7 @@
     --overlay-white-sm:   rgba(255, 255, 255, 0.10);
     --color-white:        #ffffff;
 
-    --logo-src:            url('/static/logo.png');
+    --logo-src:            url('/static/logo.svg');
     --logo-bg-opacity:     0.08;
     --logo-bg-blend:       normal;
 }
@@ -566,7 +566,7 @@ div:has(> pre.result-pre):hover .copy-btn {
                        0 4px 8px  hsla(287, 44%, 5%, 0.35);
         --focus-ring:  0 0 0 3px  hsla(287, 44%, 60%, 0.30);
 
-        --logo-src:            url('/static/logo.png');
+        --logo-src:            url('/static/logo.svg');
         --logo-bg-opacity:     0.08;
         --logo-bg-blend:       normal;
     }
@@ -610,7 +610,7 @@ html.dark {
                    0 4px 8px  hsla(287, 44%, 5%, 0.35);
     --focus-ring:  0 0 0 3px  hsla(287, 44%, 60%, 0.30);
 
-    --logo-src:            url('/static/logo.png');
+    --logo-src:            url('/static/logo.svg');
     --logo-bg-opacity:     0.08;
     --logo-bg-blend:       normal;
 }
