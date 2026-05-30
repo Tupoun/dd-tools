@@ -327,6 +327,8 @@ body {
     padding: 40px;
     max-width: 1200px;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .page-header {
