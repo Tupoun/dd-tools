@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h2>Generátor testovacích dat</h2>
-    <p>Čísla účtů dle ČNB, rodná čísla dle českých standardů</p>
+    <p>Čísla účtů dle ČNB, rodná čísla, spojovací čísla SIPO, IČO</p>
 </div>
 
 {# ── Čísla účtů ── #}
@@ -96,6 +96,47 @@
                 {% endif %}
             </div>
             {% endif %}
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ── Kontrola čísla účtu ── #}
+<div class="card">
+    <h3>Kontrola čísla účtu</h3>
+    <p style="margin-bottom: 15px; color: var(--text-light); font-size: 14px;">
+        Ověří mod-11 kontrolu ČNB a u neplatného čísla navrhne opravu poslední číslice.
+        Předčíslí zadej ve formátu <code>predcisli-cislo</code>. Kód banky je nepovinný – slouží jen pro výpočet IBAN.
+    </p>
+    <form method="POST">
+        <input type="hidden" name="action" value="check_account">
+        <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+            <div>
+                <label class="form-label">Číslo účtu</label>
+                <input type="text" name="chk_number" class="form-control" spellcheck="false"
+                    placeholder="19-19" style="width: 220px;"
+                    value="{{ form_data.chk_number if form_data.action == 'check_account' else '' }}">
+            </div>
+            <div>
+                <label class="form-label">Kód banky (nepovinné)</label>
+                <input type="text" name="chk_bank_code" class="form-control" spellcheck="false"
+                    placeholder="0800" maxlength="4" style="width: 100px;"
+                    value="{{ form_data.chk_bank_code if form_data.action == 'check_account' else '' }}">
+            </div>
+            <div><button class="btn btn-primary">Zkontrolovat</button></div>
+        </div>
+    </form>
+
+    {% if chk_result %}
+        {% if chk_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ chk_result.error }}</div>
+        {% else %}
+        {% set out = chk_result.output %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Výsledek</label>
+            <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px;">{% if out.prefix %}Předčíslí {{ out.prefix.number }}: {% if out.prefix.valid %}platné{% elif out.prefix.suggested %}neplatné, návrh opravy: {{ out.prefix.suggested }}{% else %}neplatné, opravu nelze navrhnout{% endif %}
+{% endif %}Číslo účtu {{ out.account.number }}: {% if out.account.valid %}platné{% elif out.account.suggested %}neplatné, návrh opravy: {{ out.account.suggested }}{% else %}neplatné, opravu nelze navrhnout{% endif %}{% if out.iban %}
+IBAN: {{ out.iban }}{% endif %}</pre>
         </div>
         {% endif %}
     {% endif %}
@@ -209,6 +250,68 @@
                 </div>
                 {% endif %}
             {% endfor %}
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ── SIPO ── #}
+<div class="card">
+    <h3>Spojovací čísla SIPO</h3>
+    <p style="margin-bottom: 15px; color: var(--text-light); font-size: 14px;">
+        Spojovací číslo SIPO má 10 číslic: 9 náhodných a kontrolní číslici (váhy 3-7-3-1-7-3-1-7-3, mod 10) dle technických podmínek České pošty.
+    </p>
+    <form method="POST">
+        <input type="hidden" name="action" value="generate_sipo">
+        <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+            <div>
+                <label class="form-label">Počet (1–100)</label>
+                <input type="number" name="sipo_count" class="form-control" min="1" max="100"
+                    style="width: 120px;"
+                    value="{{ form_data.sipo_count if form_data.action == 'generate_sipo' else '10' }}">
+            </div>
+            <div><button class="btn btn-primary">Generovat</button></div>
+        </div>
+    </form>
+
+    {% if sipo_result %}
+        {% if sipo_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ sipo_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">Spojovací čísla SIPO ({{ sipo_result.output | length }} ks)</label>
+            <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px;">{{ sipo_result.output | join('\n') }}</pre>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ── IČO ── #}
+<div class="card">
+    <h3>IČO</h3>
+    <p style="margin-bottom: 15px; color: var(--text-light); font-size: 14px;">
+        IČO má 8 číslic: 7 náhodných a kontrolní číslici dle mod-11 (váhy 8-7-6-5-4-3-2).
+    </p>
+    <form method="POST">
+        <input type="hidden" name="action" value="generate_ico">
+        <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+            <div>
+                <label class="form-label">Počet (1–100)</label>
+                <input type="number" name="ico_count" class="form-control" min="1" max="100"
+                    style="width: 120px;"
+                    value="{{ form_data.ico_count if form_data.action == 'generate_ico' else '10' }}">
+            </div>
+            <div><button class="btn btn-primary">Generovat</button></div>
+        </div>
+    </form>
+
+    {% if ico_result %}
+        {% if ico_result.error %}
+        <div class="alert alert-error" style="margin-top: 15px;">{{ ico_result.error }}</div>
+        {% else %}
+        <div style="margin-top: 20px;">
+            <label class="form-label">IČO ({{ ico_result.output | length }} ks)</label>
+            <pre class="result-pre" style="background: var(--bg-light); padding: 15px; border-radius: 4px; font-size: 14px;">{{ ico_result.output | join('\n') }}</pre>
         </div>
         {% endif %}
     {% endif %}

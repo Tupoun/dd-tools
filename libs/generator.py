@@ -1,5 +1,5 @@
 """
-Generátor testovacích dat: čísla účtů dle ČNB, rodná čísla dle českých standardů
+Generátor testovacích dat: čísla účtů dle ČNB, rodná čísla, spojovací čísla SIPO, IČO
 """
 
 import re
@@ -15,6 +15,21 @@ from datetime import date, timedelta
 _ACCOUNT_WEIGHTS = [6, 3, 7, 9, 10, 5, 8, 4, 2, 1]
 
 
+def _random_digits(count):
+    """Vrátí seznam náhodných číslic dané délky; první číslice je vždy nenulová."""
+    return [random.randint(1, 9)] + [random.randint(0, 9) for _ in range(count - 1)]
+
+
+def _account_check_digit(digits):
+    """
+    Dopočítá poslední číslici (váha 1) tak, aby byl vážený součet dělitelný 11.
+    Vstupem jsou číslice BEZ poslední pozice, zarovnají se doprava na 9 míst.
+    Vrací 0–10; hodnota 10 znamená, že platná poslední číslice neexistuje.
+    """
+    padded = [0] * (9 - len(digits)) + digits
+    return (-sum(d * w for d, w in zip(padded, _ACCOUNT_WEIGHTS[:9]))) % 11
+
+
 def _generate_account_part(min_len, max_len):
     """
     Vygeneruje číslo (prefix nebo číslo účtu) validní dle mod-11.
@@ -22,13 +37,8 @@ def _generate_account_part(min_len, max_len):
     """
     for _ in range(500):
         length = random.randint(min_len, max_len)
-        # První číslice nesmí být 0; dále (length-2) náhodných číslic
-        digits = [random.randint(1, 9)] + [random.randint(0, 9) for _ in range(length - 2)]
-        # Zarovnáme na 9 číslic (bez poslední) pro výpočet váhového součtu
-        padded = [0] * (9 - len(digits)) + digits
-        current_sum = sum(d * w for d, w in zip(padded, _ACCOUNT_WEIGHTS[:9]))
-        # Poslední číslice má váhu _ACCOUNT_WEIGHTS[9] = 1, takže:
-        last = (-current_sum) % 11
+        digits = _random_digits(length - 1)
+        last = _account_check_digit(digits)
         if last <= 9:
             digits.append(last)
             return ''.join(str(d) for d in digits)
@@ -96,6 +106,74 @@ def generate_account_numbers(count, with_prefix, without_prefix, bank_code=None,
                 result['with_prefix'].append(f'{prefix}-{acc}')
 
     return result, None
+
+
+def check_account_number(number):
+    """
+    Zkontroluje číslo dle mod-11 (ČNB) a případně navrhne opravu poslední číslice.
+
+    Vrátí (result, error) kde result = {'valid': bool, 'number': ..., 'suggested': ...}.
+    'suggested' je None, pokud je číslo platné nebo pokud oprava neexistuje
+    (dopočet poslední číslice vyjde 10).
+    """
+    number = str(number).strip()
+    if not re.fullmatch(r'\d{1,10}', number):
+        return None, 'Číslo musí obsahovat 1–10 číslic (0–9).'
+
+    digits = [int(ch) for ch in number]
+    padded = [0] * (10 - len(digits)) + digits
+    if sum(d * w for d, w in zip(padded, _ACCOUNT_WEIGHTS)) % 11 == 0:
+        return {'valid': True, 'number': number, 'suggested': None}, None
+
+    check = _account_check_digit(digits[:-1])
+    suggested = number[:-1] + str(check) if check <= 9 else None
+    return {'valid': False, 'number': number, 'suggested': suggested}, None
+
+
+def check_account(number, bank_code=None):
+    """
+    Zkontroluje číslo účtu, volitelně ve formátu 'predcisli-cislo', a spočítá IBAN.
+
+    Předčíslí (max 6 číslic) a číslo účtu (max 10 číslic) se kontrolují zvlášť
+    stejnou mod-11 logikou. IBAN se počítá jen při zadaném kódu banky, a to
+    z platného čísla (nebo z navržené opravy, pokud existuje).
+
+    Vrátí (result, error) kde result = {'prefix': ..., 'account': ..., 'iban': ...}.
+    """
+    number = (number or '').strip()
+    if not number:
+        return None, 'Zadej číslo účtu.'
+    if bank_code and not re.fullmatch(r'\d{4}', str(bank_code)):
+        return None, 'Kód banky musí mít přesně 4 číslice (0–9).'
+
+    if '-' in number:
+        prefix_str, account_str = number.split('-', 1)
+    else:
+        prefix_str, account_str = None, number
+
+    prefix_result = None
+    if prefix_str is not None:
+        if not re.fullmatch(r'\d{1,6}', prefix_str):
+            return None, 'Předčíslí musí obsahovat 1–6 číslic (0–9).'
+        prefix_result, error = check_account_number(prefix_str)
+        if error:
+            return None, error
+
+    account_result, error = check_account_number(account_str)
+    if error:
+        return None, error
+
+    # Pro IBAN použijeme platné číslo, jinak navrženou opravu (pokud existuje)
+    final_account = account_result['number'] if account_result['valid'] else account_result['suggested']
+    final_prefix = None
+    if prefix_result:
+        final_prefix = prefix_result['number'] if prefix_result['valid'] else prefix_result['suggested']
+
+    iban = None
+    if bank_code and final_account and (prefix_result is None or final_prefix):
+        iban = generate_iban(final_account, final_prefix or 0, bank_code)
+
+    return {'prefix': prefix_result, 'account': account_result, 'iban': iban}, None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -261,3 +339,62 @@ def generate_birth_numbers(count, gender, variants, date_mode,
             # rc může být None jen při vyčerpání unikátních hodnot (extrémně vzácné)
 
     return results, None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SIPO
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Váhy dle České pošty (Technické podmínky pro vstup Bank do SIPO, příloha č. 7)
+_SIPO_WEIGHTS = [3, 7, 3, 1, 7, 3, 1, 7, 3]
+
+
+def _sipo_check_digit(digits):
+    """Dopočítá kontrolní číslici spojovacího čísla SIPO z prvních 9 číslic."""
+    last = sum(d * w for d, w in zip(digits, _SIPO_WEIGHTS)) % 10
+    return 0 if last == 0 else 10 - last
+
+
+def generate_sipo(count):
+    """
+    Vygeneruje spojovací čísla SIPO (10 číslic: 9 náhodných + kontrolní číslice).
+
+    Vrátí (result, error) kde result je seznam stringů.
+    """
+    if not (1 <= count <= 100):
+        return None, 'Počet musí být v rozmezí 1–100.'
+
+    numbers = []
+    for _ in range(count):
+        digits = _random_digits(9)
+        numbers.append(''.join(str(d) for d in digits) + str(_sipo_check_digit(digits)))
+    return numbers, None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IČO
+# ══════════════════════════════════════════════════════════════════════════════
+
+_ICO_WEIGHTS = [8, 7, 6, 5, 4, 3, 2]
+
+
+def _ico_check_digit(digits):
+    """Dopočítá kontrolní číslici IČO (mod-11) z prvních 7 číslic."""
+    check = (11 - sum(d * w for d, w in zip(digits, _ICO_WEIGHTS))) % 11
+    return (check or 1) % 10
+
+
+def generate_ico(count):
+    """
+    Vygeneruje IČO (8 číslic: 7 náhodných + kontrolní číslice dle mod-11).
+
+    Vrátí (result, error) kde result je seznam stringů.
+    """
+    if not (1 <= count <= 100):
+        return None, 'Počet musí být v rozmezí 1–100.'
+
+    numbers = []
+    for _ in range(count):
+        digits = _random_digits(7)
+        numbers.append(''.join(str(d) for d in digits) + str(_ico_check_digit(digits)))
+    return numbers, None
