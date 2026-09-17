@@ -50,7 +50,7 @@ TOOL_GROUPS = [
         'tools': [
             {'id': 'uuid',      'name': 'UUID',           'description': 'Generátor UUID v1 a v4',                  'route': 'uuid_page'},
             {'id': 'hash',      'name': 'Hash',            'description': 'MD5, SHA-1, SHA-256, SHA-512',            'route': 'hash_generator_page'},
-            {'id': 'generator', 'name': 'Generátor dat',   'description': 'Čísla účtů dle ČNB, rodná čísla',        'route': 'generator_page'},
+            {'id': 'generator', 'name': 'Generátor dat',   'description': 'Čísla účtů, rodná čísla, SIPO, IČO',     'route': 'generator_page'},
         ]
     },
     {
@@ -540,6 +540,9 @@ def generator_page():
     """Stránka pro generování testovacích dat"""
     acc_result = None
     bn_result = None
+    sipo_result = None
+    ico_result = None
+    chk_result = None
     form_data = {}
 
     if request.method == 'POST':
@@ -568,6 +571,35 @@ def generator_page():
             )
             acc_result = {'output': output, 'error': error}
 
+        elif action == 'check_account':
+            chk_number = request.form.get('chk_number', '').strip()
+            chk_bank_code = request.form.get('chk_bank_code', '').strip()
+            form_data = {
+                'action': action,
+                'chk_number': chk_number,
+                'chk_bank_code': chk_bank_code,
+            }
+            output, error = generator.check_account(chk_number, bank_code=chk_bank_code)
+            chk_result = {'output': output, 'error': error}
+
+        elif action == 'generate_sipo':
+            try:
+                count = int(request.form.get('sipo_count', 10))
+            except ValueError:
+                count = 0
+            form_data = {'action': action, 'sipo_count': count}
+            output, error = generator.generate_sipo(count)
+            sipo_result = {'output': output, 'error': error}
+
+        elif action == 'generate_ico':
+            try:
+                count = int(request.form.get('ico_count', 10))
+            except ValueError:
+                count = 0
+            form_data = {'action': action, 'ico_count': count}
+            output, error = generator.generate_ico(count)
+            ico_result = {'output': output, 'error': error}
+
         elif action == 'generate_birth_numbers':
             try:
                 count = int(request.form.get('bn_count', 10))
@@ -595,7 +627,8 @@ def generator_page():
                     bn_result = {'output': None, 'error': 'Věkový rozsah musí být celé číslo.'}
                     return render_template('generator.html', tools=TOOLS,
                                            acc_result=acc_result, bn_result=bn_result,
-                                           form_data=form_data)
+                                           sipo_result=sipo_result, ico_result=ico_result,
+                                           chk_result=chk_result, form_data=form_data)
                 output, error = generator.generate_birth_numbers(
                     count, gender, variants, 'range',
                     age_min=age_min, age_max=age_max
@@ -609,7 +642,8 @@ def generator_page():
                     bn_result = {'output': None, 'error': 'Neplatný formát data. Použij YYYY/MM/DD, např. 1990/06/15.'}
                     return render_template('generator.html', tools=TOOLS,
                                            acc_result=acc_result, bn_result=bn_result,
-                                           form_data=form_data)
+                                           sipo_result=sipo_result, ico_result=ico_result,
+                                           chk_result=chk_result, form_data=form_data)
                 output, error = generator.generate_birth_numbers(
                     count, gender, variants, 'specific',
                     specific_date=specific_date
@@ -618,7 +652,8 @@ def generator_page():
 
     return render_template('generator.html', tools=TOOLS,
                            acc_result=acc_result, bn_result=bn_result,
-                           form_data=form_data)
+                           sipo_result=sipo_result, ico_result=ico_result,
+                           chk_result=chk_result, form_data=form_data)
 
 
 @app.route('/sql-joins')
